@@ -217,12 +217,10 @@ export function generateCombinedQuestion(
 
   const meaningOptions = shuffle([correctMeaning, ...meaningDistractors]);
 
-  // Track used meanings
+  // Track used correct meanings only (not distractors) to avoid the correct answer
+  // appearing as a distractor in a later question
   if (usedMeanings) {
     usedMeanings.add(correctMeaning);
-    for (const d of meaningDistractors) {
-      usedMeanings.add(d);
-    }
   }
 
   return {
@@ -319,11 +317,16 @@ export function buildTest(
   // Generate one combined question per word
   const vocabQuestions: Question[] = [];
   const usedMeanings = new Set<string>();
+  const usedDisplayChars = new Set<string>(); // prevent duplicate compound questions
 
   for (const { word, isNew } of wordsToTest) {
     const displayChar = segmentedStory
       ? findWordInStory(word.character, segmentedStory)
       : word.character;
+
+    // Skip if we already generated a question for this display character
+    if (usedDisplayChars.has(displayChar)) continue;
+    usedDisplayChars.add(displayChar);
 
     // If compound word found in story, check if we have its meaning
     const isCompound = displayChar.length > 1;

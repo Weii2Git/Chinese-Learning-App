@@ -120,7 +120,7 @@ export default function TestSummaryPage() {
             </div>
             <div className="rounded-xl bg-slate-800 p-3">
               <p className="text-2xl font-bold text-amber-400">⭐{vocabCorrectCount}</p>
-              <p className="text-xs text-slate-500 mt-0.5">Stars Earned</p>
+              <p className="text-xs text-slate-500 mt-0.5">Stars (vocab)</p>
             </div>
           </div>
         </div>
