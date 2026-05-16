@@ -36,8 +36,8 @@ export function lookupCompoundPinyin(compoundWord: string, fallbackPinyin?: stri
 }
 
 /**
- * Find the best compound word from the segmented story that contains a given character.
- * Prefers the longest compound word. Returns the character itself if no compound found.
+ * Find the first 2-character compound word from the segmented story that contains a given character.
+ * Prefers 2-character words. Falls back to the character itself if none found.
  */
 export function findWordInStory(character: string, segmentedStory: string): string {
   if (!segmentedStory) return character;
@@ -45,15 +45,17 @@ export function findWordInStory(character: string, segmentedStory: string): stri
   const segments = segmentedStory.split("/").filter((s) => s.length > 0);
   const isChineseOnly = (s: string) => /^[\u4e00-\u9fff]+$/.test(s);
 
-  // Collect all compound segments containing this character
-  const matches = segments.filter(
+  // Return the first 2-character segment containing this character
+  const twoCharMatch = segments.find(
+    (s) => s.length === 2 && s.includes(character) && isChineseOnly(s)
+  );
+  if (twoCharMatch) return twoCharMatch;
+
+  // Fall back to any multi-character segment (first occurrence)
+  const anyMatch = segments.find(
     (s) => s.length > 1 && s.includes(character) && isChineseOnly(s)
   );
-
-  if (matches.length === 0) return character;
-
-  // Prefer the longest match (most specific compound)
-  return matches.reduce((best, curr) => curr.length > best.length ? curr : best);
+  return anyMatch ?? character;
 }
 
 /**
