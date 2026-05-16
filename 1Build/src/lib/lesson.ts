@@ -171,14 +171,17 @@ export async function completeLessonAndUpdateState(
 
   // Classify answers and build knowledge updates (vocab questions only)
   const knowledgeUpdates: KnowledgeUpdate[] = [];
-  // Count correct answers (1 star per correct answer)
+  // Count ALL correct answers (vocab + comprehension) for star awards
   let correctCount = 0;
 
   for (const result of results) {
-    // Only process vocab questions for knowledge state updates
-    if (result.question.kind !== "vocab") {
+    // Count comprehension correct answers for stars
+    if (result.question.kind === "comprehension") {
+      if (result.isCorrect) correctCount++;
       continue;
     }
+
+    // Vocab questions: update knowledge state AND count stars
 
     const vocabData = result.question.data;
     const existingRecord = knowledgeMap.get(vocabData.wordId);
@@ -234,7 +237,7 @@ export async function completeLessonAndUpdateState(
   // Bulk update knowledge states
   await bulkUpdate(studentId, knowledgeUpdates);
 
-  // Award performance stars: 1 per correct vocab answer
+  // Award performance stars: 1 per correct answer (vocab + comprehension)
   const performanceStarsEarned = correctCount;
 
   // On the first lesson of the day, also add the current streak count as a bonus

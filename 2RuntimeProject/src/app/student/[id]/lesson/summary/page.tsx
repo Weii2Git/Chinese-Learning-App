@@ -91,7 +91,7 @@ export default function TestSummaryPage() {
   const { updatedStudent, knowledgeUpdates, leveledUp, streakBonus } = data;
   const totalQuestions = lessonState.results.length;
   const correctCount = lessonState.results.filter((r) => r.isCorrect).length;
-  const vocabCorrectCount = lessonState.results.filter((r) => r.isCorrect && r.question.kind === "vocab").length;
+  const starsEarned = correctCount; // all correct answers earn stars
   const knownCount = knowledgeUpdates.filter((u) => u.newState === "known").length;
   const learningCount = knowledgeUpdates.filter((u) => u.newState === "learning").length;
   const dontKnowCount = knowledgeUpdates.filter((u) => u.newState === "don't know").length;
@@ -119,8 +119,8 @@ export default function TestSummaryPage() {
               <p className="text-xs text-slate-500 mt-0.5">Correct</p>
             </div>
             <div className="rounded-xl bg-slate-800 p-3">
-              <p className="text-2xl font-bold text-amber-400">⭐{vocabCorrectCount}</p>
-              <p className="text-xs text-slate-500 mt-0.5">Stars (vocab)</p>
+              <p className="text-2xl font-bold text-amber-400">⭐{starsEarned}</p>
+              <p className="text-xs text-slate-500 mt-0.5">Stars Earned</p>
             </div>
           </div>
         </div>
