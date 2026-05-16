@@ -62,8 +62,6 @@ export default function AdminPage() {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [wordData, setWordData] = useState<StudentWordData | null>(null);
   const [loadingWords, setLoadingWords] = useState(false);
-  const [timeTravelDays, setTimeTravelDays] = useState(1);
-  const [timeTravelMsg, setTimeTravelMsg] = useState<string | null>(null);
 
   // Load students on mount
   useEffect(() => {
@@ -312,27 +310,7 @@ export default function AdminPage() {
 
           {selectedStudent && (
             <div className="rounded-xl bg-slate-800 border border-slate-700 p-4 mb-5">
-              <p className="text-sm font-semibold text-slate-300 mb-1">Time Travel</p>
-              <p className="text-xs text-slate-500 mb-3">Fast-forward SRS due dates to simulate days passing</p>
-              <div className="flex items-center gap-2">
-                <input type="number" min="1" max="180" value={timeTravelDays}
-                  onChange={(e) => setTimeTravelDays(Number(e.target.value))}
-                  className="w-20 rounded-lg bg-slate-700 border border-slate-600 px-3 py-1.5 text-sm text-white text-center focus:outline-none"
-                />
-                <span className="text-sm text-slate-500">days</span>
-                <button
-                  onClick={async () => {
-                    setTimeTravelMsg(null);
-                    const res = await fetch("/api/admin/time-travel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ studentId: selectedStudent, days: timeTravelDays }) });
-                    const data = await res.json();
-                    setTimeTravelMsg(data.message || data.error);
-                    const refreshRes = await fetch(`/api/admin/student-words?studentId=${selectedStudent}`);
-                    setWordData(await refreshRes.json());
-                  }}
-                  className="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-1.5 text-sm font-semibold text-white transition-colors"
-                >Fast Forward →</button>
-              </div>
-              {timeTravelMsg && <p className="mt-2 text-xs text-slate-400">{timeTravelMsg}</p>}
+              <p className="text-xs text-slate-500 italic">Select a student above to view their word status.</p>
             </div>
           )}
 
