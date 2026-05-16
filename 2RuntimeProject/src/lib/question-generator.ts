@@ -280,7 +280,7 @@ export function buildTest(
         const lookupId = `lookup:${lookupText}`;
         if (!addedIds.has(lookupId)) {
           const lookupPinyin = lookupCompoundPinyin(lookupText);
-          const lookupMeaning = wordMeanings?.[lookupText] || "";
+          const lookupMeaning = (wordMeanings?.[lookupText] || "").replace(/\s*\(.*?\)\s*/g, "").trim();
           if (lookupPinyin && lookupMeaning) {
             addedIds.add(lookupId);
             const lookupWord: Word = {
@@ -338,7 +338,9 @@ export function buildTest(
       // Check word meanings from Gemini first, then our dictionary, then character meaning
       const geminiMeaning = wordMeanings?.[displayChar];
       const dictMeaning = lookupCompoundMeaning(displayChar);
-      testMeaning = geminiMeaning || dictMeaning || word.english;
+      const rawMeaning = geminiMeaning || dictMeaning || word.english;
+      // Strip any parenthetical annotations the AI may have added e.g. "(using new word '罩')"
+      testMeaning = rawMeaning.replace(/\s*\(.*?\)\s*/g, "").trim();
     } else {
       // Single character
       testChar = word.character;
