@@ -1,0 +1,556 @@
+[
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:倦",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 3,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-05-16T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:燕",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T01:51:26.461Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T01:51:26.454Z",
+    "nextDueDate": "2026-08-07T01:51:26.454Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:聚",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:07:36.894Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T02:07:36.885Z",
+    "nextDueDate": "2026-08-07T02:07:36.885Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:增",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:07:36.894Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T02:07:36.885Z",
+    "nextDueDate": "2026-08-07T02:07:36.885Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:掠",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:07:36.894Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T02:07:36.885Z",
+    "nextDueDate": "2026-08-07T02:07:36.885Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:稻",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:07:36.894Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T02:07:36.885Z",
+    "nextDueDate": "2026-06-08T02:07:36.885Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:尖",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:07:36.894Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T02:07:36.885Z",
+    "nextDueDate": "2026-08-07T02:07:36.885Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:偶",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T01:51:26.461Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T01:51:26.454Z",
+    "nextDueDate": "2026-06-08T01:51:26.454Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:沾",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:07:36.894Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T02:07:36.885Z",
+    "nextDueDate": "2026-08-07T02:07:36.885Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:圈",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-08-07T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:漾",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:07:36.894Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T02:07:36.885Z",
+    "nextDueDate": "2026-06-08T02:07:36.885Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:符",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T01:51:26.461Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T01:51:26.454Z",
+    "nextDueDate": "2026-06-08T01:51:26.454Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:演",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-08-07T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:赞",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-08-07T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:咏",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-08-07T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "lookup:翡翠",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-08-07T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:碧",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-06-08T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:妆",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-08-07T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:裁",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 5,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-08-07T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:剪",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 3,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-05-16T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "lookup:露珠",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T01:51:26.461Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T01:51:26.454Z",
+    "nextDueDate": "2026-06-08T01:51:26.454Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:滨",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 3,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-05-16T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:紫",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T01:51:26.461Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T01:51:26.454Z",
+    "nextDueDate": "2026-06-08T01:51:26.454Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:荷",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T01:51:26.461Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T01:51:26.454Z",
+    "nextDueDate": "2026-06-08T01:51:26.454Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "lookup:奥秘",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:07:36.894Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T02:07:36.885Z",
+    "nextDueDate": "2026-06-08T02:07:36.885Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:挨",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:07:36.894Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T02:07:36.885Z",
+    "nextDueDate": "2026-06-08T02:07:36.885Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:莲",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-06-08T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:蓬",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-05-12T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "lookup:羡慕",
+    "level": "",
+    "state": "don't know",
+    "lastUpdated": "2026-05-09T02:07:36.894Z",
+    "intervalStage": 1,
+    "lastReviewedAt": "2026-05-09T02:07:36.885Z",
+    "nextDueDate": "2026-05-10T02:07:36.885Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:账",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-06-08T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:仿",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 4,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-06-08T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:佛",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-05-12T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:裳",
+    "level": "",
+    "state": "learning",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-05-12T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:蹈",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-05-12T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "lookup:蝴蝶",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-05-12T02:22:38.362Z"
+  },
+  {
+    "studentId": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+    "wordId": "3-b:翩",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T02:22:38.368Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T02:22:38.362Z",
+    "nextDueDate": "2026-05-12T02:22:38.362Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "3-b:燕",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:歌唱家",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:动听",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "3-b:偶",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:忙碌",
+    "level": "",
+    "state": "don't know",
+    "lastUpdated": "2026-05-09T05:17:44.324Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:建造",
+    "level": "",
+    "state": "learning",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:准备",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:迎接",
+    "level": "",
+    "state": "learning",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:不亦乐乎",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:例外",
+    "level": "",
+    "state": "learning",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:哼着",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:小调",
+    "level": "",
+    "state": "learning",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "3-b:聚",
+    "level": "",
+    "state": "learning",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:丰收",
+    "level": "",
+    "state": "don't know",
+    "lastUpdated": "2026-05-09T05:17:44.324Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:金灿灿",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "3-b:掠",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:微风",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:馈赠",
+    "level": "",
+    "state": "learning",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "3-b:增",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  },
+  {
+    "studentId": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    "wordId": "lookup:渐渐",
+    "level": "",
+    "state": "known",
+    "lastUpdated": "2026-05-09T05:17:44.324Z",
+    "intervalStage": 2,
+    "lastReviewedAt": "2026-05-09T05:17:44.315Z",
+    "nextDueDate": "2026-05-12T05:17:44.315Z"
+  }
+]
