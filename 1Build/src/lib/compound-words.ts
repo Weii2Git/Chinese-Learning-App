@@ -212,7 +212,6 @@ export const COMPOUND_WORD_MAP: Record<string, string> = {
   "农村": "countryside",
   "自己": "oneself",
   "别人": "other people",
-  "大家": "everyone",
   "一定": "certainly; must",
   "可能": "maybe; possible",
   "应该": "should; ought to",
