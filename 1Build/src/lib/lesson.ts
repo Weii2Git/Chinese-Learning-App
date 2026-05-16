@@ -9,6 +9,7 @@ import { getStudent, updateStudent, checkAndAdvanceLevel } from "./student";
 import { updateStreakStars, awardPerformanceStars } from "./stars";
 import { getWordsForLevel, getAllWords } from "./word-list";
 import { prioritizeReviewWords, advanceInterval, resetInterval } from "./srs";
+import { appendStarLog } from "@/app/api/admin/adjust-stars/route";
 import type {
   Word,
   WordSelection,
@@ -246,6 +247,26 @@ export async function completeLessonAndUpdateState(
   const streakBonus = isFirstLessonToday ? student.streakStars : 0;
 
   await awardPerformanceStars(studentId, performanceStarsEarned + streakBonus);
+
+  // Log the star award
+  const studentAfterAward = await getStudent(studentId);
+  const totalAfter = studentAfterAward?.performanceStars ?? 0;
+  const totalBefore = totalAfter - (performanceStarsEarned + streakBonus);
+  const logReason = streakBonus > 0
+    ? `Lesson completed: ${performanceStarsEarned} correct answers + ${streakBonus} streak bonus`
+    : `Lesson completed: ${performanceStarsEarned} correct answers`;
+  await appendStarLog({
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    studentId,
+    studentName: student.name,
+    starType: "performanceStars",
+    previousValue: totalBefore,
+    newValue: totalAfter,
+    delta: performanceStarsEarned + streakBonus,
+    reason: logReason,
+    source: "lesson",
+  });
 
   // Update streak stars (also records active day)
   const streakStars = await updateStreakStars(studentId);
