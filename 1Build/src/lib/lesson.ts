@@ -6,7 +6,7 @@ import {
 } from "./constants";
 import { readKnowledgeRecords, bulkUpdate } from "./knowledge";
 import { getStudent, updateStudent, checkAndAdvanceLevel } from "./student";
-import { updateStreakStars, awardPerformanceStars } from "./stars";
+import { updateStreakStars } from "./stars";
 import { getWordsForLevel, getAllWords } from "./word-list";
 import { prioritizeReviewWords, advanceInterval, resetInterval } from "./srs";
 import { appendStarLog } from "@/app/api/admin/adjust-stars/route";
@@ -245,36 +245,35 @@ export async function completeLessonAndUpdateState(
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Singapore" });
   const isFirstLessonToday = student.lastActiveDate !== today;
   const streakBonus = isFirstLessonToday ? student.streakStars : 0;
+  const totalStarsToAdd = performanceStarsEarned + streakBonus;
 
-  await awardPerformanceStars(studentId, performanceStarsEarned + streakBonus);
+  // Run all independent updates in parallel
+  const [, streakStars] = await Promise.all([
+    // Award stars + increment lessons in one update
+    updateStudent(studentId, {
+      performanceStars: student.performanceStars + totalStarsToAdd,
+      lessonsCompleted: student.lessonsCompleted + 1,
+    }),
+    // Update streak (records active day)
+    updateStreakStars(studentId),
+  ]);
 
-  // Log the star award
-  const studentAfterAward = await getStudent(studentId);
-  const totalAfter = studentAfterAward?.performanceStars ?? 0;
-  const totalBefore = totalAfter - (performanceStarsEarned + streakBonus);
+  // Log the star award (non-blocking — don't await, fire and forget)
   const logReason = streakBonus > 0
     ? `Lesson completed: ${performanceStarsEarned} correct answers + ${streakBonus} streak bonus`
     : `Lesson completed: ${performanceStarsEarned} correct answers`;
-  await appendStarLog({
+  appendStarLog({
     id: crypto.randomUUID(),
     timestamp: new Date().toISOString(),
     studentId,
     studentName: student.name,
     starType: "performanceStars",
-    previousValue: totalBefore,
-    newValue: totalAfter,
-    delta: performanceStarsEarned + streakBonus,
+    previousValue: student.performanceStars,
+    newValue: student.performanceStars + totalStarsToAdd,
+    delta: totalStarsToAdd,
     reason: logReason,
     source: "lesson",
-  });
-
-  // Update streak stars (also records active day)
-  const streakStars = await updateStreakStars(studentId);
-
-  // Increment lessonsCompleted
-  await updateStudent(studentId, {
-    lessonsCompleted: student.lessonsCompleted + 1,
-  });
+  }).catch(() => {}); // don't block on logging
 
   // Check for level advancement
   const advanceResult = await checkAndAdvanceLevel(studentId);
