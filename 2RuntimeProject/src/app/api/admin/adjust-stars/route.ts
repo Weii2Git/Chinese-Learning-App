@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
-    const previousValue = student[starType];
+    const previousValue = student[starType as keyof typeof student] as number;
     const delta = newValue - previousValue;
 
     // Apply the update
