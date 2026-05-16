@@ -154,7 +154,7 @@ export default function TestSummaryPage() {
               <div className="flex flex-col items-center gap-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xl text-amber-400">★</span>
-                  <span className="text-lg font-bold text-amber-400">+{vocabCorrectCount}</span>
+                  <span className="text-lg font-bold text-amber-400">+{starsEarned}</span>
                   <span className="text-slate-500 text-sm">lesson</span>
                 </div>
                 {streakBonus > 0 && (
