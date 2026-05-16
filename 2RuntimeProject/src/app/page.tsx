@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { getAllStudents } from "@/lib/student";
+import { getKnowledgeSummary } from "@/lib/knowledge";
 import { StudentCard } from "@/components/StudentCard";
 
-// Fixed display order: top-left, top-right, bottom-left, bottom-right
 const DISPLAY_ORDER = ["Patrick", "Cony Da Banana", "Mommy", "Ryan"];
 
 export default async function Home() {
@@ -13,6 +13,11 @@ export default async function Home() {
     const bi = DISPLAY_ORDER.indexOf(b.name);
     return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
   });
+
+  // Fetch knowledge summaries for all students in parallel
+  const summaries = await Promise.all(
+    sorted.map((s) => getKnowledgeSummary(s.id, s.currentLevel))
+  );
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center px-8 py-16">
@@ -31,8 +36,8 @@ export default async function Home() {
 
       {/* Student cards grid */}
       <main className="grid w-full max-w-4xl grid-cols-1 sm:grid-cols-2 gap-5">
-        {sorted.map((student) => (
-          <StudentCard key={student.id} student={student} />
+        {sorted.map((student, i) => (
+          <StudentCard key={student.id} student={student} knownPercentage={summaries[i].knownPercentage} />
         ))}
       </main>
 
