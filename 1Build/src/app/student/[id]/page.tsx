@@ -3,10 +3,8 @@ import Image from "next/image";
 import { getStudent } from "@/lib/student";
 import { getKnowledgeSummary } from "@/lib/knowledge";
 import { LevelBadge } from "@/components/LevelBadge";
-import { StarDisplay } from "@/components/StarDisplay";
-import { KnowledgeOverview } from "@/components/KnowledgeOverview";
-import { ProgressBar } from "@/components/ProgressBar";
 import { checkAndResetStreak } from "@/lib/stars";
+import { StudentDashboardClient } from "@/components/StudentDashboardClient";
 
 const PLAYER_IMAGES: Record<string, string> = {
   "Patrick":        "/assets/characters/char_patrick.png",
@@ -43,11 +41,13 @@ export default async function StudentDashboardPage({
     );
   }
 
-  const summary = await getKnowledgeSummary(student.id, student.currentLevel);
   // Passive streak check — resets to 0 if a day was missed
   await checkAndResetStreak(student.id);
-  // Re-fetch student after potential streak reset
+  // Re-fetch after potential streak reset
   const freshStudent = (await getStudent(id)) ?? student;
+
+  const summary = await getKnowledgeSummary(freshStudent.id, freshStudent.currentLevel);
+
   const characterImg = PLAYER_IMAGES[freshStudent.name];
   const scale = PLAYER_SCALE[freshStudent.name] ?? 1;
   const baseSize = 88;
@@ -65,10 +65,10 @@ export default async function StudentDashboardPage({
         </Link>
       </div>
 
-      <div className="w-full max-w-2xl space-y-5">
-        {/* Profile card */}
+      {/* Profile header */}
+      <div className="w-full max-w-2xl mb-6">
         <div className="rounded-2xl bg-slate-900 border border-slate-800 p-8">
-          <div className="flex items-center gap-6 mb-8">
+          <div className="flex items-center gap-6">
             <div className="w-24 h-24 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
               {characterImg ? (
                 <Image src={characterImg} alt={freshStudent.name} width={imgSize} height={imgSize} className="object-contain" style={{ imageRendering: "pixelated" }} unoptimized />
@@ -83,36 +83,22 @@ export default async function StudentDashboardPage({
               </div>
             </div>
           </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="rounded-xl bg-slate-800 p-4 text-center">
-              <p className="text-3xl font-bold text-white">{freshStudent.lessonsCompleted}</p>
-              <p className="text-sm text-slate-500 mt-1">Lessons</p>
-            </div>
-            <div className="rounded-xl bg-slate-800 p-4 text-center">
-              <StarDisplay count={freshStudent.streakStars} label="Streak" />
-            </div>
-            <div className="rounded-xl bg-slate-800 p-4 text-center">
-              <StarDisplay count={freshStudent.performanceStars} label="Stars" />
-            </div>
-          </div>
-
-          {/* Progress */}
-          <div className="space-y-5">
-            <KnowledgeOverview summary={summary} />
-            <ProgressBar percentage={summary.knownPercentage} />
-          </div>
         </div>
-
-        {/* Start lesson */}
-        <Link
-          href={`/student/${freshStudent.id}/lesson/reading`}
-          className="block w-full rounded-2xl bg-indigo-600 hover:bg-indigo-500 px-6 py-5 text-center text-xl font-bold text-white transition-colors shadow-lg shadow-indigo-900/30"
-        >
-          Start Lesson →
-        </Link>
       </div>
+
+      {/* Interactive client section */}
+      <StudentDashboardClient
+        studentId={freshStudent.id}
+        studentName={freshStudent.name}
+        lessonsCompleted={freshStudent.lessonsCompleted}
+        streakStars={freshStudent.streakStars}
+        performanceStars={freshStudent.performanceStars}
+        knownCount={summary.known}
+        learningCount={summary.learning}
+        dontKnowCount={summary.dontKnow}
+        knownPercentage={summary.knownPercentage}
+        currentLevel={freshStudent.currentLevel}
+      />
     </div>
   );
 }

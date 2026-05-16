@@ -58,21 +58,13 @@ export function StudentCard({ student, knownPercentage }: { student: Student; kn
         <div className="flex-1 min-w-0">
           <h2 className="text-white font-bold text-xl truncate">{student.name}</h2>
 
-          {/* Level + stats row */}
+          {/* Level + lessons row */}
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <span className={`inline-block text-base font-bold text-white bg-gradient-to-r ${colors.accent} px-4 py-1.5 rounded-full`}>
               Level {student.currentLevel}
             </span>
             <span className="text-sm text-slate-400">
               {student.lessonsCompleted} lessons
-            </span>
-            <span className="flex items-center gap-1.5 text-base text-slate-300">
-              <Image src="/assets/icons/heart.png" alt="heart" width={22} height={22} unoptimized style={{ imageRendering: "pixelated" }} />
-              ×{student.streakStars}
-            </span>
-            <span className="flex items-center gap-1.5 text-base text-slate-300">
-              <Image src="/assets/icons/star.png" alt="star" width={22} height={22} unoptimized style={{ imageRendering: "pixelated" }} />
-              ×{student.performanceStars}
             </span>
           </div>
 
@@ -88,6 +80,18 @@ export function StudentCard({ student, knownPercentage }: { student: Student; kn
                 style={{ width: `${progress}%` }}
               />
             </div>
+          </div>
+
+          {/* Heart and star counts at bottom */}
+          <div className="flex items-center gap-4 mt-3">
+            <span className="flex items-center gap-1.5 text-base text-slate-300">
+              <Image src="/assets/icons/heart.png" alt="heart" width={22} height={22} unoptimized style={{ imageRendering: "pixelated" }} />
+              ×{student.streakStars}
+            </span>
+            <span className="flex items-center gap-1.5 text-base text-slate-300">
+              <Image src="/assets/icons/star.png" alt="star" width={22} height={22} unoptimized style={{ imageRendering: "pixelated" }} />
+              ×{student.performanceStars}
+            </span>
           </div>
         </div>
 
