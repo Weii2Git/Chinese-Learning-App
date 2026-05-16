@@ -204,7 +204,8 @@ export async function completeLessonAndUpdateState(
 
     const update: KnowledgeUpdate = {
       wordId: vocabData.wordId,
-      level: "", // Will be filled from word data if available
+      // Extract level from wordId (format: "level:character") or fall back to existing record
+      level: existingRecord?.level || (vocabData.wordId.includes(":") ? vocabData.wordId.split(":")[0] : student.currentLevel),
       newState,
     };
 
