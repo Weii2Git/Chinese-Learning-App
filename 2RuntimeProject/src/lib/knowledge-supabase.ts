@@ -29,6 +29,12 @@ function mapRowToRecord(row: Record<string, unknown>): KnowledgeRecord {
   if (row.next_due_date != null) {
     record.nextDueDate = row.next_due_date as string;
   }
+  if (row.compound_word != null) {
+    record.compoundWord = row.compound_word as string;
+  }
+  if (row.compound_meaning != null) {
+    record.compoundMeaning = row.compound_meaning as string;
+  }
 
   return record;
 }
@@ -155,6 +161,13 @@ export async function bulkUpdate(
     }
     if (update.nextDueDate !== undefined) {
       row.next_due_date = update.nextDueDate;
+    }
+    // Only save compound context when first learning (don't overwrite existing)
+    if (update.compoundWord) {
+      row.compound_word = update.compoundWord;
+    }
+    if (update.compoundMeaning) {
+      row.compound_meaning = update.compoundMeaning;
     }
 
     return row;

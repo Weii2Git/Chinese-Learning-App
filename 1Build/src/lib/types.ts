@@ -29,9 +29,13 @@ export interface KnowledgeRecord {
   lastUpdated: string; // ISO datetime
 
   // SRS fields (optional for backward compatibility)
-  intervalStage?: number;      // 1-5, undefined means no SRS data yet
-  lastReviewedAt?: string;     // ISO datetime of last review
-  nextDueDate?: string;        // ISO datetime when next review is due
+  intervalStage?: number;
+  lastReviewedAt?: string;
+  nextDueDate?: string;
+
+  // Compound word context — saved when first learned in a story
+  compoundWord?: string;    // e.g. "露珠"
+  compoundMeaning?: string; // e.g. "dew drop"
 }
 
 export interface VocabQuestion {
@@ -105,6 +109,9 @@ export interface KnowledgeUpdate {
   intervalStage?: number;
   lastReviewedAt?: string;
   nextDueDate?: string;
+  // Optional compound context — saved when first learning a word in a story
+  compoundWord?: string;
+  compoundMeaning?: string;
 }
 
 export interface LessonOutcome {

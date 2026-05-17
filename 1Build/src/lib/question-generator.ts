@@ -259,7 +259,8 @@ export function buildTest(
   comprehensionQuestions: ComprehensionQuestion[],
   segmentedStory?: string,
   wordMeanings?: Record<string, string>,
-  lookedUpWords?: string[]
+  lookedUpWords?: string[],
+  knowledgeRecords?: Array<{ wordId: string; compoundWord?: string; compoundMeaning?: string }>
 ): Question[] {
   const allWords = [...newWords, ...reviewWords];
 
@@ -325,6 +326,16 @@ export function buildTest(
   const usedMeanings = new Set<string>();
   const usedDisplayChars = new Set<string>(); // prevent duplicate compound questions
 
+  // Build a map of wordId → saved compound context from previous lessons
+  const savedCompoundMap = new Map<string, { compoundWord: string; compoundMeaning: string }>();
+  if (knowledgeRecords) {
+    for (const rec of knowledgeRecords) {
+      if (rec.compoundWord && rec.compoundMeaning) {
+        savedCompoundMap.set(rec.wordId, { compoundWord: rec.compoundWord, compoundMeaning: rec.compoundMeaning });
+      }
+    }
+  }
+
   for (const { word, isNew } of wordsToTest) {
     const displayChar = segmentedStory
       ? findWordInStory(word.character, segmentedStory)
@@ -344,24 +355,28 @@ export function buildTest(
       // Always test the compound word from the story
       testChar = displayChar;
       testPinyin = lookupCompoundPinyin(displayChar, word.pinyin);
-      // Check word meanings from Gemini first, then our dictionary, then character meaning
       const geminiMeaning = wordMeanings?.[displayChar];
       const dictMeaning = lookupCompoundMeaning(displayChar);
       const rawMeaning = geminiMeaning || dictMeaning || word.english;
-      // Strip any parenthetical annotations the AI may have added e.g. "(using new word '罩')"
       testMeaning = rawMeaning.replace(/\s*\(.*?\)\s*/g, "").trim();
 
-      // If we still have no meaning, fall back to testing the single character
       if (!testMeaning) {
         testChar = word.character;
         testPinyin = word.pinyin;
         testMeaning = word.english;
       }
     } else {
-      // Single character
-      testChar = word.character;
-      testPinyin = word.pinyin;
-      testMeaning = word.english;
+      // Single character — check if we have a saved compound from a previous lesson
+      const saved = savedCompoundMap.get(word.id);
+      if (saved && !usedDisplayChars.has(saved.compoundWord)) {
+        testChar = saved.compoundWord;
+        testPinyin = lookupCompoundPinyin(saved.compoundWord, word.pinyin);
+        testMeaning = saved.compoundMeaning;
+      } else {
+        testChar = word.character;
+        testPinyin = word.pinyin;
+        testMeaning = word.english;
+      }
     }
 
     // Skip if we have no meaning (would produce an empty answer choice)

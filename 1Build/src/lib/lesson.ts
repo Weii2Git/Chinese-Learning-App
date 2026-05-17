@@ -209,6 +209,18 @@ export async function completeLessonAndUpdateState(
       newState,
     };
 
+    // Save compound context when first learning a word (character ≠ compound means it was tested as a compound)
+    const isNewlyLearned = !isReviewWord && (newState === "known" || newState === "learning");
+    if (isNewlyLearned && vocabData.character !== vocabData.wordId.split(":").pop()) {
+      // The question was tested as a compound word
+      update.compoundWord = vocabData.character;
+      update.compoundMeaning = vocabData.correctMeaning;
+    } else if (isNewlyLearned && vocabData.character.length > 1) {
+      // Multi-character word tested directly
+      update.compoundWord = vocabData.character;
+      update.compoundMeaning = vocabData.correctMeaning;
+    }
+
     if (isReviewWord) {
       // This is a review word (already "known")
       if (result.isCorrect) {

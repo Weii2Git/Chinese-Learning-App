@@ -45,17 +45,25 @@ export default function TestPage() {
 
     try {
       const level = newWords[0]?.level || reviewWords[0]?.level || "1-a";
-      const res = await fetch("/api/generate-comprehension", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ story, level }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
+
+      // Fetch saved compound context and comprehension questions in parallel
+      const [compRes, compQRes] = await Promise.all([
+        fetch(`/api/students/${studentId}/compounds`),
+        fetch("/api/generate-comprehension", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ story, level }),
+        }),
+      ]);
+
+      const knowledgeRecords = compRes.ok ? await compRes.json() : [];
+
+      if (!compQRes.ok) {
+        const data = await compQRes.json();
         throw new Error(data.error || "Failed to generate comprehension questions");
       }
-      const { questions: comprehensionQuestions } = (await res.json()) as { questions: ComprehensionQuestion[] };
-      const fullTest = buildTest(newWords, reviewWords, comprehensionQuestions, lessonState?.segmentedStory, lessonState?.wordMeanings, lessonState?.lookedUpWords);
+      const { questions: comprehensionQuestions } = (await compQRes.json()) as { questions: ComprehensionQuestion[] };
+      const fullTest = buildTest(newWords, reviewWords, comprehensionQuestions, lessonState?.segmentedStory, lessonState?.wordMeanings, lessonState?.lookedUpWords, knowledgeRecords);
       questionsRef.current = fullTest;
       setQuestions(fullTest);
       setPhase("ready");
