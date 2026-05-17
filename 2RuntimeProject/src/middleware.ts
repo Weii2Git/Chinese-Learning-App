@@ -15,6 +15,12 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Skip passcode on localhost (dev environment)
+  const host = req.headers.get("host") || "";
+  if (host.startsWith("localhost") || host.startsWith("127.0.0.1")) {
+    return NextResponse.next();
+  }
+
   // Check for valid session cookie
   const session = req.cookies.get("site_session")?.value;
   if (session === "authenticated") {
