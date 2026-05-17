@@ -6,6 +6,8 @@ import { LevelBadge } from "@/components/LevelBadge";
 import { checkAndResetStreak } from "@/lib/stars";
 import { StudentDashboardClient } from "@/components/StudentDashboardClient";
 
+export const dynamic = "force-dynamic";
+
 const PLAYER_IMAGES: Record<string, string> = {
   "Patrick":        "/assets/characters/char_patrick.png",
   "Ryan":           "/assets/characters/char_ryan.png",

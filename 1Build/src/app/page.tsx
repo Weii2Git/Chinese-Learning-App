@@ -3,6 +3,9 @@ import { getAllStudents } from "@/lib/student";
 import { getKnowledgeSummary } from "@/lib/knowledge";
 import { StudentCard } from "@/components/StudentCard";
 
+// Always fetch fresh data — never cache this page
+export const dynamic = "force-dynamic";
+
 const DISPLAY_ORDER = ["Patrick", "Cony Da Banana", "Mommy", "Ryan"];
 
 export default async function Home() {
