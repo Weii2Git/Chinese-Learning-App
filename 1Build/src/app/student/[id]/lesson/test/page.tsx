@@ -14,7 +14,7 @@ type TestPhase = "loading" | "ready" | "error";
 export default function TestPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { lessonState, setQuestions, addResult } = useLessonContext();
+  const { lessonState, setQuestions, addResult, markNewRoundStart } = useLessonContext();
 
   const [phase, setPhase] = useState<TestPhase>("loading");
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +66,7 @@ export default function TestPage() {
       const fullTest = buildTest(newWords, reviewWords, comprehensionQuestions, lessonState?.segmentedStory, lessonState?.wordMeanings, lessonState?.lookedUpWords, knowledgeRecords);
       questionsRef.current = fullTest;
       setQuestions(fullTest);
+      markNewRoundStart(); // mark where this round's results start
       setPhase("ready");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
@@ -96,14 +97,17 @@ export default function TestPage() {
   const handleConfirm = useCallback(() => {
     const nextIndex = currentIndex + 1;
     if (nextIndex >= questionsRef.current.length) {
-      const correctCount = resultsRef.current.filter((r) => r.isCorrect).length;
-      const accuracy = resultsRef.current.length > 0 ? correctCount / resultsRef.current.length : 0;
+      // Only count results from this round
+      const roundStart = lessonState?.lastRoundStartIndex ?? 0;
+      const roundResults = resultsRef.current.slice(roundStart);
+      const correctCount = roundResults.filter((r) => r.isCorrect).length;
+      const accuracy = roundResults.length > 0 ? correctCount / roundResults.length : 0;
       router.push(accuracy < 0.8 ? `/student/${studentId}/lesson/reread` : `/student/${studentId}/lesson/summary`);
     } else {
       setCurrentIndex(nextIndex);
       setQuestionKey((k) => k + 1);
     }
-  }, [currentIndex, router, studentId]);
+  }, [currentIndex, router, studentId, lessonState?.lastRoundStartIndex]);
 
   if (phase === "error") {
     return (

@@ -22,6 +22,7 @@ interface LessonContextValue {
   addLookedUpWord: (word: string) => void;
   resetLesson: () => void;
   initLesson: (studentId: string) => void;
+  markNewRoundStart: () => void;
 }
 
 const LessonContext = createContext<LessonContextValue | null>(null);
@@ -123,6 +124,13 @@ export function LessonProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const markNewRoundStart = useCallback(() => {
+    setLessonState((prev) => {
+      if (!prev) return prev;
+      return { ...prev, lastRoundStartIndex: prev.results.length };
+    });
+  }, []);
+
   const resetLesson = useCallback(() => {
     setLessonState(null);
     if (typeof window !== "undefined") {
@@ -142,6 +150,7 @@ export function LessonProvider({ children }: { children: React.ReactNode }) {
       results: [],
       comprehensionLoopCount: 0,
       lookedUpWords: [],
+      lastRoundStartIndex: 0,
     };
     setLessonState(newState);
   }, []);
@@ -157,6 +166,7 @@ export function LessonProvider({ children }: { children: React.ReactNode }) {
     addLookedUpWord,
     resetLesson,
     initLesson,
+    markNewRoundStart,
   };
 
   return (

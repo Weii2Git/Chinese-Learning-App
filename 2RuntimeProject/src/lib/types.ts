@@ -80,6 +80,7 @@ export interface LessonState {
   results: QuestionResult[];
   comprehensionLoopCount: number;
   lookedUpWords: string[]; // words the user clicked/right-clicked during reading
+  lastRoundStartIndex: number; // index in results[] where the last test round started
 }
 
 export interface EnrichedWordCache {

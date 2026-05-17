@@ -15,7 +15,7 @@ const RETEST_PASS_THRESHOLD = 0.8;
 export default function RereadPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { lessonState, incrementComprehensionLoop, addResult } = useLessonContext();
+  const { lessonState, incrementComprehensionLoop, addResult, markNewRoundStart } = useLessonContext();
 
   const [phase, setPhase] = useState<Phase>("reread");
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +70,7 @@ export default function RereadPage() {
       setLoopAnswers([]);
       setQuestionKey((k) => k + 1);
       setPhase("questions");
+      markNewRoundStart(); // mark where this retest round starts
       questionStartRef.current = performance.now();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred");

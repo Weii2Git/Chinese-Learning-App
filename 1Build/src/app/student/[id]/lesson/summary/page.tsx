@@ -32,11 +32,13 @@ export default function TestSummaryPage() {
     async function submitResults() {
       try {
         const allResults = lessonState!.results;
-        const lastTestResults = allResults.slice(-23);
+        // Only send results from the last passing round
+        const roundStart = lessonState!.lastRoundStartIndex ?? 0;
+        const lastRoundResults = allResults.slice(roundStart);
         const res = await fetch("/api/lessons/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ studentId, results: lastTestResults }),
+          body: JSON.stringify({ studentId, results: lastRoundResults }),
         });
         if (!res.ok) {
           const body = await res.json();
@@ -89,9 +91,12 @@ export default function TestSummaryPage() {
   if (!data || !lessonState) return null;
 
   const { updatedStudent, knowledgeUpdates, leveledUp, streakBonus } = data;
-  const totalQuestions = lessonState.results.length;
-  const correctCount = lessonState.results.filter((r) => r.isCorrect).length;
-  const starsEarned = correctCount; // all correct answers earn stars
+  // Only show stats from the last passing round
+  const roundStart = lessonState.lastRoundStartIndex ?? 0;
+  const lastRoundResults = lessonState.results.slice(roundStart);
+  const totalQuestions = lastRoundResults.length;
+  const correctCount = lastRoundResults.filter((r) => r.isCorrect).length;
+  const starsEarned = correctCount;
   const knownCount = knowledgeUpdates.filter((u) => u.newState === "known").length;
   const learningCount = knowledgeUpdates.filter((u) => u.newState === "learning").length;
   const dontKnowCount = knowledgeUpdates.filter((u) => u.newState === "don't know").length;
