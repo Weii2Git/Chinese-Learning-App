@@ -221,16 +221,41 @@ export interface StoryResult {
 
 /**
  * Parse the JSON response from Gemini for story generation.
+ * Tries multiple extraction strategies to handle malformed responses.
  */
 function parseStoryResponse(text: string): StoryResult {
   let jsonStr = text.trim();
-  // Handle markdown code blocks
-  const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (jsonMatch) {
-    jsonStr = jsonMatch[1].trim();
+
+  // Strategy 1: extract from markdown code block
+  const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlockMatch) {
+    jsonStr = codeBlockMatch[1].trim();
+  } else {
+    // Strategy 2: extract the outermost { ... } block
+    const braceStart = jsonStr.indexOf("{");
+    const braceEnd = jsonStr.lastIndexOf("}");
+    if (braceStart !== -1 && braceEnd > braceStart) {
+      jsonStr = jsonStr.slice(braceStart, braceEnd + 1);
+    }
   }
 
-  const parsed = JSON.parse(jsonStr);
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(jsonStr);
+  } catch {
+    // Strategy 3: try to salvage by extracting just the story and segmented fields
+    // using regex, ignoring the potentially broken wordMeanings
+    const storyMatch = text.match(/"story"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+    const segmentedMatch = text.match(/"segmented"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+    if (storyMatch && segmentedMatch) {
+      return {
+        story: storyMatch[1].replace(/\\n/g, "\n").replace(/\\\"/g, '"').replace(/\*\*/g, ""),
+        segmented: segmentedMatch[1].replace(/\\n/g, "\n").replace(/\\\"/g, '"').replace(/\*\*/g, ""),
+        wordMeanings: {},
+      };
+    }
+    throw new Error(`Failed to parse story JSON: ${jsonStr.slice(0, 200)}`);
+  }
 
   if (typeof parsed.story !== "string" || typeof parsed.segmented !== "string") {
     throw new Error("Invalid story response format");
@@ -240,7 +265,7 @@ function parseStoryResponse(text: string): StoryResult {
     story: parsed.story.replace(/\*\*/g, ""),
     segmented: parsed.segmented.replace(/\*\*/g, ""),
     wordMeanings: parsed.wordMeanings && typeof parsed.wordMeanings === "object"
-      ? parsed.wordMeanings
+      ? parsed.wordMeanings as Record<string, string>
       : {},
   };
 }
