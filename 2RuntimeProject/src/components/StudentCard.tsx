@@ -24,13 +24,20 @@ const PLAYER_SCALE: Record<string, number> = {
   "Ryan":    1.5,
 };
 
+function getTodaySingapore(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Singapore" });
+}
+
 export function StudentCard({ student, knownPercentage }: { student: Student; knownPercentage: number }) {
   const colors = PLAYER_COLORS[student.name] || DEFAULT_COLOR;
   const characterImg = PLAYER_IMAGES[student.name] || "/assets/characters/char_patrick.png";
   const scale = PLAYER_SCALE[student.name] ?? 1;
-  const baseSize = 72;
-  const imgSize = Math.round(baseSize * scale);
+  const imgSize = Math.round(72 * scale);
   const progress = Math.min(100, Math.max(0, knownPercentage));
+
+  // Flame is orange if a lesson was done today, grey otherwise
+  const doneToday = student.lastActiveDate === getTodaySingapore();
+  const flameColor = doneToday ? "text-orange-400" : "text-slate-500";
 
   return (
     <Link
@@ -43,31 +50,26 @@ export function StudentCard({ student, knownPercentage }: { student: Student; kn
       <div className="p-6 flex items-center gap-5">
         {/* Avatar */}
         <div className={`shrink-0 w-20 h-20 rounded-xl bg-slate-800 ring-2 ${colors.ring} ring-offset-2 ring-offset-slate-900 flex items-center justify-center overflow-hidden`}>
-          <Image
-            src={characterImg}
-            alt={student.name}
-            width={imgSize}
-            height={imgSize}
-            className="object-contain"
-            style={{ imageRendering: "pixelated" }}
-            unoptimized
-          />
+          <Image src={characterImg} alt={student.name} width={imgSize} height={imgSize} className="object-contain" style={{ imageRendering: "pixelated" }} unoptimized />
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <h2 className="text-white font-bold text-xl truncate">{student.name}</h2>
+          {/* Name + streak on same row */}
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-white font-bold text-xl truncate">{student.name}</h2>
+            <span className={`flex items-center gap-0.5 text-xl font-bold shrink-0 ${flameColor}`}>
+              🔥{student.streakStars}
+            </span>
+          </div>
 
-          {/* Level + lessons + streak row */}
+          {/* Level + lessons row */}
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <span className={`inline-block text-base font-bold text-white bg-gradient-to-r ${colors.accent} px-4 py-1.5 rounded-full`}>
               Level {student.currentLevel}
             </span>
             <span className="text-sm text-slate-400">
               {student.lessonsCompleted} lessons
-            </span>
-            <span className="flex items-center gap-1 text-base font-bold text-orange-400">
-              🔥{student.streakStars}
             </span>
           </div>
 
@@ -78,10 +80,7 @@ export function StudentCard({ student, knownPercentage }: { student: Student; kn
               <span>{Math.round(progress)}%</span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
-              <div
-                className={`h-full rounded-full ${colors.bar} transition-all duration-500`}
-                style={{ width: `${progress}%` }}
-              />
+              <div className={`h-full rounded-full ${colors.bar} transition-all duration-500`} style={{ width: `${progress}%` }} />
             </div>
           </div>
 

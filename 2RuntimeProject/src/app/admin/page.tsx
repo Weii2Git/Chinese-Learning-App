@@ -97,7 +97,7 @@ export default function AdminPage() {
   const selectedStudentInfo = students.find((s) => s.id === starStudent);
   const deltaNum = parseInt(starDelta, 10);
   const previewValue = selectedStudentInfo
-    ? Math.max(0, selectedStudentInfo.performanceStars + (isNaN(deltaNum) ? 0 : deltaNum))
+    ? selectedStudentInfo.performanceStars + (isNaN(deltaNum) ? 0 : deltaNum)
     : null;
 
   async function handleStarAdjust() {
@@ -109,7 +109,7 @@ export default function AdminPage() {
       setStarMsg({ type: "error", text: "Enter a non-zero number." }); return;
     }
     const current = selectedStudentInfo?.performanceStars ?? 0;
-    const newValue = Math.max(0, current + delta);
+    const newValue = current + delta;
     setStarSaving(true); setStarMsg(null);
     try {
       const res = await fetch("/api/admin/adjust-stars", {

@@ -119,8 +119,8 @@ export async function POST(req: NextRequest) {
     if (starType !== "performanceStars") {
       return NextResponse.json({ error: "Only performanceStars can be adjusted by admin" }, { status: 400 });
     }
-    if (typeof newValue !== "number" || newValue < 0 || !Number.isInteger(newValue)) {
-      return NextResponse.json({ error: "newValue must be a non-negative integer" }, { status: 400 });
+    if (typeof newValue !== "number" || !Number.isInteger(newValue)) {
+      return NextResponse.json({ error: "newValue must be an integer" }, { status: 400 });
     }
 
     const student = await getStudent(studentId);

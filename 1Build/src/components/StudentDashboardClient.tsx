@@ -154,14 +154,13 @@ export function StudentDashboardClient({
 
       {/* Word Knowledge + Lessons row */}
       <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
-        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide text-center mb-3">Word Knowledge</p>
-        {/* Progress bar */}
-        <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-800 mb-4">
-          {knownPct > 0 && <div className="bg-emerald-500 transition-all" style={{ width: `${knownPct}%` }} />}
-          {learningPct > 0 && <div className="bg-amber-400 transition-all" style={{ width: `${learningPct}%` }} />}
-        </div>
-        {/* Known / Learning / Lessons boxes */}
+        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide text-center mb-4">Progress</p>
+        {/* Lessons / Known / Learning boxes */}
         <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-xl bg-slate-800 border border-slate-700 p-3 text-center">
+            <p className="text-2xl font-bold text-white">{lessonsCompleted}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Lessons</p>
+          </div>
           <button
             onClick={() => openWords("known")}
             className={`rounded-xl p-3 text-center border transition-colors ${panel === "known" ? "bg-emerald-500/20 border-emerald-500/40" : "bg-slate-800 border-slate-700 hover:border-emerald-500/40"}`}
@@ -176,10 +175,6 @@ export function StudentDashboardClient({
             <p className="text-2xl font-bold text-amber-400">{learningCount}</p>
             <p className="text-xs text-slate-400 mt-0.5">Learning ↗</p>
           </button>
-          <div className="rounded-xl bg-slate-800 border border-slate-700 p-3 text-center">
-            <p className="text-2xl font-bold text-white">{lessonsCompleted}</p>
-            <p className="text-xs text-slate-400 mt-0.5">Lessons</p>
-          </div>
         </div>
       </div>
 
@@ -263,17 +258,6 @@ export function StudentDashboardClient({
           )}
         </div>
       )}
-
-      {/* Level progress */}
-      <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
-        <div className="flex items-center justify-between text-base text-slate-400 mb-3">
-          <span>Level {currentLevel} Progress</span>
-          <span className="font-semibold text-slate-300">{Math.round(progress)}% known</span>
-        </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-slate-800">
-          <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500" style={{ width: `${progress}%` }} />
-        </div>
-      </div>
 
       {/* Start lesson */}
       <Link href={`/student/${studentId}/lesson/reading`}
