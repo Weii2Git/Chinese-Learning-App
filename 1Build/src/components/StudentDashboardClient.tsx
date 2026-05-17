@@ -154,27 +154,38 @@ export function StudentDashboardClient({
       {/* Word Knowledge + Lessons row */}
       <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wide text-center mb-4">Progress</p>
-        {/* Lessons / Known / Learning boxes */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-xl bg-slate-800 border border-slate-700 p-3 text-center">
+        {/* Lessons / Known / Learning boxes — equal height */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="rounded-xl bg-slate-800 border border-slate-700 p-3 text-center flex flex-col items-center justify-center min-h-[72px]">
             <p className="text-2xl font-bold text-white">{lessonsCompleted}</p>
             <p className="text-xs text-slate-400 mt-0.5">Lessons</p>
           </div>
           <button
             onClick={() => openWords("known")}
-            className={`rounded-xl p-3 text-center border transition-colors ${panel === "known" ? "bg-emerald-500/20 border-emerald-500/40" : "bg-slate-800 border-slate-700 hover:border-emerald-500/40"}`}
+            className={`rounded-xl p-3 text-center border transition-colors flex flex-col items-center justify-center min-h-[72px] ${panel === "known" ? "bg-emerald-500/20 border-emerald-500/40" : "bg-slate-800 border-slate-700 hover:border-emerald-500/40"}`}
           >
             <p className="text-2xl font-bold text-emerald-400">{knownCount}</p>
             <p className="text-xs text-slate-400 mt-0.5">Known ↗</p>
           </button>
           <button
             onClick={() => openWords("learning")}
-            className={`rounded-xl p-3 text-center border transition-colors ${panel === "learning" ? "bg-amber-500/20 border-amber-500/40" : "bg-slate-800 border-slate-700 hover:border-amber-500/40"}`}
+            className={`rounded-xl p-3 text-center border transition-colors flex flex-col items-center justify-center min-h-[72px] ${panel === "learning" ? "bg-amber-500/20 border-amber-500/40" : "bg-slate-800 border-slate-700 hover:border-amber-500/40"}`}
           >
             <p className="text-2xl font-bold text-amber-400">{learningCount}</p>
             <p className="text-xs text-slate-400 mt-0.5">Learning ↗</p>
           </button>
-        </div>      </div>
+        </div>
+        {/* Level progress bar */}
+        <div>
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+            <span>Level {currentLevel} Progress</span>
+            <span className="font-semibold text-slate-300">{Math.round(progress)}% known</span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+            <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500" style={{ width: `${progress}%` }} />
+          </div>
+        </div>
+      </div>
 
       {/* Streak Calendar Modal */}
       {showCalendar && (
