@@ -73,14 +73,14 @@ export function StudentCard({ student }: { student: Student }) {
           </div>
 
           {/* Heart and star counts — centered */}
-          <div className="flex items-center justify-center gap-4 mt-3">
-            <span className="flex items-center gap-1.5 text-base text-slate-300">
+          <div className="flex items-center justify-center gap-8 mt-3">
+            <span className="flex items-center gap-2 text-base text-slate-300">
               <Image src="/assets/icons/heart.png" alt="heart" width={22} height={22} unoptimized style={{ imageRendering: "pixelated" }} />
-              ×{student.streakStars}
+              × {student.streakStars}
             </span>
-            <span className="flex items-center gap-1.5 text-base text-slate-300">
+            <span className="flex items-center gap-2 text-base text-slate-300">
               <Image src="/assets/icons/star.png" alt="star" width={22} height={22} unoptimized style={{ imageRendering: "pixelated" }} />
-              ×{student.performanceStars}
+              × {student.performanceStars}
             </span>
           </div>
         </div>
