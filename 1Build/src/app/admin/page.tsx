@@ -190,7 +190,7 @@ export default function AdminPage() {
             >
               <option value="">Select a student...</option>
               {students.map((s) => (
-                <option key={s.id} value={s.id}>{s.name} — ⭐ {s.performanceStars} stars</option>
+                <option key={s.id} value={s.id}>{s.name} — ⭐ {s.performanceStars}</option>
               ))}
             </select>
           </div>
@@ -208,14 +208,16 @@ export default function AdminPage() {
                   )}
                 </label>
                 <div className="flex gap-2">
+                  {/* Single toggle button for +/- */}
                   <button
-                    onClick={() => setStarDelta((v) => String(Math.abs(parseInt(v || "0", 10) || 1)))}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-bold border transition-colors ${!starDelta.startsWith("-") && starDelta !== "" ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300" : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500"}`}
-                  >+ Add</button>
-                  <button
-                    onClick={() => setStarDelta((v) => "-" + Math.abs(parseInt(v || "0", 10) || 1))}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-bold border transition-colors ${starDelta.startsWith("-") ? "bg-red-500/20 border-red-500/50 text-red-300" : "bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500"}`}
-                  >− Remove</button>
+                    onClick={() => setStarDelta((v) => {
+                      const abs = Math.abs(parseInt(v || "0", 10) || 1);
+                      return v.startsWith("-") ? String(abs) : "-" + abs;
+                    })}
+                    className={`px-4 py-2.5 rounded-xl text-sm font-bold border transition-colors min-w-[80px] ${starDelta.startsWith("-") ? "bg-red-500/20 border-red-500/50 text-red-300" : "bg-emerald-500/20 border-emerald-500/50 text-emerald-300"}`}
+                  >
+                    {starDelta.startsWith("-") ? "− Remove" : "+ Add"}
+                  </button>
                   <input
                     type="number" min="1"
                     value={starDelta.replace("-", "")}
