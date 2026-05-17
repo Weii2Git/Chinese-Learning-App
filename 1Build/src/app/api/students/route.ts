@@ -33,6 +33,7 @@ export async function POST(request: Request) {
     name,
     currentLevel: level,
     streakStars: 0,
+    streakFreezes: 0,
     performanceStars: 0,
     lastActiveDate: null,
     lessonsCompleted: 0,
