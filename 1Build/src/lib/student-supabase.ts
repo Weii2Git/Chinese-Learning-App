@@ -12,6 +12,7 @@ function mapRowToStudent(row: Record<string, unknown>): Student {
     name: row.name as string,
     currentLevel: row.current_level as string,
     streakStars: row.streak_stars as number,
+    streakFreezes: (row.streak_freezes as number) ?? 0,
     performanceStars: row.performance_stars as number,
     lastActiveDate: row.last_active_date as string | null,
     lessonsCompleted: row.lessons_completed as number,
@@ -103,6 +104,7 @@ export async function updateStudent(
   if (updates.name !== undefined) row.name = updates.name;
   if (updates.currentLevel !== undefined) row.current_level = updates.currentLevel;
   if (updates.streakStars !== undefined) row.streak_stars = updates.streakStars;
+  if (updates.streakFreezes !== undefined) row.streak_freezes = updates.streakFreezes;
   if (updates.performanceStars !== undefined) row.performance_stars = updates.performanceStars;
   if (updates.lastActiveDate !== undefined) row.last_active_date = updates.lastActiveDate;
   if (updates.lessonsCompleted !== undefined) row.lessons_completed = updates.lessonsCompleted;

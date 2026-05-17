@@ -94,6 +94,7 @@ export default async function StudentDashboardPage({
         studentName={freshStudent.name}
         lessonsCompleted={freshStudent.lessonsCompleted}
         streakStars={freshStudent.streakStars}
+        streakFreezes={freshStudent.streakFreezes ?? 0}
         performanceStars={freshStudent.performanceStars}
         knownCount={summary.known}
         learningCount={summary.learning}

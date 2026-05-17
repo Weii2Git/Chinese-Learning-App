@@ -1,27 +1,22 @@
 import { getStudent, updateStudent } from "./student";
+import { logActivity } from "./activity-log";
 
-/**
- * Determine the date string (YYYY-MM-DD) for today in Singapore time (UTC+8).
- */
+const FREEZE_EARN_INTERVAL = 10; // earn 1 freeze every 10 streak days
+
 function getTodayDateString(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Singapore" });
 }
 
-/**
- * Determine the date string (YYYY-MM-DD) for yesterday in Singapore time (UTC+8).
- */
 function getYesterdayDateString(): string {
-  const now = new Date();
-  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
   return yesterday.toLocaleDateString("en-CA", { timeZone: "Asia/Singapore" });
 }
 
 /**
- * Check if the streak should be reset due to a missed day, and reset it if so.
- * Called when the student dashboard loads (passive check).
- *
- * - If lastActiveDate is today or yesterday → streak is still valid, no change
- * - If lastActiveDate is anything else (or null) → reset streak to 0
+ * Passive streak check on dashboard load.
+ * - If active today or yesterday → streak alive, no change
+ * - If missed a day AND has freezes → use 1 freeze, log it, keep streak
+ * - If missed a day AND no freezes → reset streak to 0
  */
 export async function checkAndResetStreak(studentId: string): Promise<void> {
   const student = await getStudent(studentId);
@@ -30,80 +25,71 @@ export async function checkAndResetStreak(studentId: string): Promise<void> {
   const today = getTodayDateString();
   const yesterday = getYesterdayDateString();
 
-  // Streak is still alive if they were active today or yesterday
-  if (student.lastActiveDate === today || student.lastActiveDate === yesterday) {
-    return;
-  }
+  // Streak still alive
+  if (student.lastActiveDate === today || student.lastActiveDate === yesterday) return;
+  // Never played
+  if (!student.lastActiveDate) return;
 
-  // Missed a day (or never played) — reset streak to 0
-  if (student.streakStars !== 0) {
-    await updateStudent(studentId, { streakStars: 0 });
+  if (student.streakFreezes > 0) {
+    // Use a freeze to protect the streak
+    const missedDate = yesterday; // the day that was missed
+    await updateStudent(studentId, {
+      streakFreezes: student.streakFreezes - 1,
+      lastActiveDate: yesterday, // treat yesterday as "covered" so streak stays alive
+    });
+    await logActivity(studentId, missedDate, "freeze_used", `Streak freeze used (streak: ${student.streakStars})`);
+  } else {
+    // No freezes — reset streak
+    if (student.streakStars !== 0) {
+      await updateStudent(studentId, { streakStars: 0 });
+    }
   }
 }
 
 /**
- * Update a student's streak count when they complete a lesson.
- *
- * Logic:
- * - If lastActiveDate is today → already completed a lesson today, keep streak unchanged
- * - If lastActiveDate is yesterday → consecutive day, increment streak by 1
- * - Anything else → start fresh at 1
- *
- * Also updates lastActiveDate to today.
- * Returns the updated streak count.
+ * Update streak when a lesson is completed.
+ * - Already active today → no change
+ * - Active yesterday → increment streak, check if freeze earned
+ * - Otherwise → reset to 1
+ * Returns the new streak count.
  */
 export async function updateStreakStars(studentId: string): Promise<number> {
   const student = await getStudent(studentId);
-  if (!student) {
-    throw new Error(`Student not found: ${studentId}`);
-  }
+  if (!student) throw new Error(`Student not found: ${studentId}`);
 
   const today = getTodayDateString();
   const yesterday = getYesterdayDateString();
 
   let newStreakStars: number;
+  let newFreezes = student.streakFreezes;
+  let freezeEarned = false;
 
   if (student.lastActiveDate === today) {
-    // Already completed a lesson today — keep streak unchanged
     newStreakStars = student.streakStars;
   } else if (student.lastActiveDate === yesterday) {
-    // Consecutive day — increment streak (no cap)
     newStreakStars = student.streakStars + 1;
+    // Earn a freeze every FREEZE_EARN_INTERVAL days
+    if (newStreakStars % FREEZE_EARN_INTERVAL === 0) {
+      newFreezes = student.streakFreezes + 1;
+      freezeEarned = true;
+    }
   } else {
-    // Gap in activity (or first lesson ever) — start at 1
     newStreakStars = 1;
   }
 
   await updateStudent(studentId, {
     streakStars: newStreakStars,
+    streakFreezes: newFreezes,
     lastActiveDate: today,
   });
 
-  return newStreakStars;
-}
+  // Log lesson activity
+  await logActivity(studentId, today, "lesson", `Streak: ${newStreakStars}`);
 
-/**
- * Award performance stars to a student based on the number of quick correct answers.
- *
- * Performance stars are cumulative and never decremented.
- * Each quick correct answer earns 1 performance star.
- *
- * Returns the updated total performance star count.
- */
-export async function awardPerformanceStars(
-  studentId: string,
-  quickCorrectCount: number
-): Promise<number> {
-  const student = await getStudent(studentId);
-  if (!student) {
-    throw new Error(`Student not found: ${studentId}`);
+  // Log freeze earned if applicable
+  if (freezeEarned) {
+    await logActivity(studentId, today, "freeze_earned", `Earned at streak ${newStreakStars}`);
   }
 
-  const newPerformanceStars = student.performanceStars + quickCorrectCount;
-
-  await updateStudent(studentId, {
-    performanceStars: newPerformanceStars,
-  });
-
-  return newPerformanceStars;
+  return newStreakStars;
 }

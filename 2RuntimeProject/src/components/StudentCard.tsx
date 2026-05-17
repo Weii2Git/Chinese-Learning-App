@@ -66,6 +66,13 @@ export function StudentCard({ student, knownPercentage }: { student: Student; kn
             <span className="text-sm text-slate-400">
               {student.lessonsCompleted} lessons
             </span>
+            <span className="flex items-center gap-1 text-base font-bold text-orange-400">
+              🔥{student.streakStars}
+            </span>
+            <span className="flex items-center gap-1.5 text-base text-slate-300">
+              <Image src="/assets/icons/star.png" alt="star" width={22} height={22} unoptimized style={{ imageRendering: "pixelated" }} />
+              ×{student.performanceStars}
+            </span>
           </div>
 
           {/* Level progress bar */}

@@ -3,10 +3,11 @@
 export interface Student {
   id: string;
   name: string;
-  currentLevel: string; // e.g. "3-a"
-  streakStars: number; // 0-5
-  performanceStars: number; // cumulative
-  lastActiveDate: string | null; // ISO date string "YYYY-MM-DD"
+  currentLevel: string;
+  streakStars: number;       // current streak count (days)
+  streakFreezes: number;     // available streak freezes
+  performanceStars: number;  // cumulative (renamed "Bonus" in UI)
+  lastActiveDate: string | null;
   lessonsCompleted: number;
 }
 
@@ -136,4 +137,12 @@ export interface ComprehensionParams {
 export interface ParsedLevel {
   level: string;
   characters: string[];
+}
+
+export interface ActivityLogEntry {
+  id: string;
+  studentId: string;
+  activityDate: string; // YYYY-MM-DD
+  activityType: "lesson" | "freeze_used" | "freeze_earned";
+  notes?: string;
 }
