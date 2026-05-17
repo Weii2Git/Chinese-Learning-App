@@ -32,8 +32,8 @@ export async function POST(
     if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
 
     const previousValue = student.performanceStars;
-    const newValue = Math.max(0, previousValue - deductAmount);
-    const actualDelta = newValue - previousValue; // will be negative
+    const newValue = previousValue - deductAmount; // can go negative
+    const actualDelta = newValue - previousValue;
 
     await updateStudent(id, { performanceStars: newValue });
 
