@@ -55,11 +55,19 @@ function countChineseChars(text: string): number {
 }
 
 /**
- * Validates that a story meets the character count requirements.
+ * Validates that a story meets the character count requirements
+ * AND contains all required new words.
  */
-function isValidStory(story: string): boolean {
+function isValidStory(story: string, newWords?: Array<{ character: string }>): boolean {
   const charCount = countChineseChars(story);
-  return charCount >= STORY_MIN_CHARS && charCount <= STORY_MAX_CHARS;
+  if (charCount < STORY_MIN_CHARS || charCount > STORY_MAX_CHARS) return false;
+  // Check all new words appear in the story
+  if (newWords) {
+    for (const word of newWords) {
+      if (!story.includes(word.character)) return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -116,7 +124,7 @@ ${knownWordsStr}
 1. 故事必须使用简体中文
 2. 故事长度必须在${STORY_PROMPT_MIN_CHARS}到${STORY_PROMPT_MAX_CHARS}个汉字之间
 3. 故事内容要适合儿童阅读，有趣且有教育意义
-4. 所有新词汇必须在故事中至少出现一次
+4. 所有新词汇必须在故事中完整出现至少一次（例如：词汇是"恢复"，故事中必须出现"恢复"这两个字连在一起，不能只用其中一个字）
 5. 故事的难度要符合等级 ${params.level} 的水平
 6. 不要使用任何markdown格式（如**加粗**）
 7. 不需要推理过程，直接输出JSON结果
@@ -124,7 +132,7 @@ ${knownWordsStr}
 请严格按照以下JSON格式输出，不要包含任何其他文字：
 {
   "story": "故事纯文本（不含分词标记）",
-  "segmented": "用/分隔每个词的故事文本，标点符号单独作为一个段。例如：小明/今天/去/学校/，/他/很/开心/。",
+  "segmented": "用/分隔每个词的故事文本，标点符号单独作为一个段。重要：多字词必须作为整体，不能拆开（例如：恢复/健康，不能写成恢/复/健康）。例如：小明/今天/去/学校/，/他/很/开心/。",
   "wordMeanings": {"多字词1": "English meaning", "多字词2": "English meaning"}
 }
 
@@ -324,7 +332,7 @@ export async function generateStory(params: StoryParams): Promise<StoryResult> {
   // First attempt
   try {
     const result = await attemptGeneration();
-    if (isValidStory(result.story)) {
+    if (isValidStory(result.story, params.newWords)) {
       return result;
     }
   } catch {
@@ -333,14 +341,14 @@ export async function generateStory(params: StoryParams): Promise<StoryResult> {
 
   // Auto-retry once
   const retryResult = await attemptGeneration();
-  if (isValidStory(retryResult.story)) {
+  if (isValidStory(retryResult.story, params.newWords)) {
     return retryResult;
   }
 
   throw new Error(
-    `Generated story does not meet length requirements. ` +
-    `Expected ${STORY_MIN_CHARS}-${STORY_MAX_CHARS} Chinese characters, ` +
-    `got ${countChineseChars(retryResult.story)}. Please try again.`
+    `Generated story does not meet requirements. ` +
+    `Expected ${STORY_MIN_CHARS}-${STORY_MAX_CHARS} Chinese characters and all new words present. ` +
+    `Please try again.`
   );
 }
 
