@@ -194,7 +194,7 @@ export function generateCombinedQuestion(
   let meaningPool = allWords
     .filter((w) => w.id !== word.id)
     .map((w) => w.english)
-    .filter((e) => e && e.length > 0 && e !== correctMeaning);
+    .filter((e) => e && e.trim().length > 0 && e !== correctMeaning);
 
   // Also add meanings from compound dictionary for variety
   const compoundMeanings = Object.values(COMPOUND_WORD_MAP) as string[];
@@ -350,12 +350,22 @@ export function buildTest(
       const rawMeaning = geminiMeaning || dictMeaning || word.english;
       // Strip any parenthetical annotations the AI may have added e.g. "(using new word '罩')"
       testMeaning = rawMeaning.replace(/\s*\(.*?\)\s*/g, "").trim();
+
+      // If we still have no meaning, fall back to testing the single character
+      if (!testMeaning) {
+        testChar = word.character;
+        testPinyin = word.pinyin;
+        testMeaning = word.english;
+      }
     } else {
       // Single character
       testChar = word.character;
       testPinyin = word.pinyin;
       testMeaning = word.english;
     }
+
+    // Skip if we have no meaning (would produce an empty answer choice)
+    if (!testMeaning || !testPinyin) continue;
 
     vocabQuestions.push({
       kind: "vocab" as const,
