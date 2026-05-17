@@ -17,7 +17,7 @@ export interface StarAdjustmentEntry {
   newValue: number;
   delta: number;
   reason: string;
-  source: "admin" | "lesson"; // who triggered this change
+  source: "admin" | "lesson" | "student";
 }
 
 // --- Shared log helpers (used by this route AND lesson completion) ---

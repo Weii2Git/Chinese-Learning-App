@@ -47,7 +47,7 @@ export async function POST(
       newValue,
       delta: actualDelta,
       reason: reason.trim(),
-      source: "admin", // student self-deduction treated same as admin
+      source: "student",
     });
 
     return NextResponse.json({ newValue, delta: actualDelta });

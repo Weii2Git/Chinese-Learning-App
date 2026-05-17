@@ -36,7 +36,7 @@ interface StarAdjustmentEntry {
   newValue: number;
   delta: number;
   reason: string;
-  source: "admin" | "lesson";
+  source: "admin" | "lesson" | "student";
 }
 
 export default function AdminPage() {

@@ -19,7 +19,7 @@ interface StarEntry {
   previousValue: number;
   newValue: number;
   reason: string;
-  source: "admin" | "lesson";
+  source: "admin" | "lesson" | "student";
 }
 
 interface Props {
@@ -214,8 +214,8 @@ export function StudentDashboardClient({
                 <div key={entry.id} className={`rounded-xl px-4 py-3 flex items-start gap-3 ${entry.source === "lesson" ? "bg-indigo-500/10 border border-indigo-500/20" : "bg-slate-800"}`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${entry.source === "lesson" ? "bg-indigo-500/20 text-indigo-300" : "bg-slate-700 text-slate-400"}`}>
-                        {entry.source === "lesson" ? "Lesson" : "Manual"}
+                      <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${entry.source === "lesson" ? "bg-indigo-500/20 text-indigo-300" : entry.source === "student" ? "bg-slate-600/40 text-slate-300" : "bg-slate-700 text-slate-400"}`}>
+                        {entry.source === "lesson" ? "Lesson" : entry.source === "student" ? "Student" : "Manual"}
                       </span>
                       <span className={`text-sm font-bold ${entry.delta > 0 ? "text-emerald-400" : "text-red-400"}`}>
                         {entry.delta > 0 ? `+${entry.delta}` : entry.delta}
