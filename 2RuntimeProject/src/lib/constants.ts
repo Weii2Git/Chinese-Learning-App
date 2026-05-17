@@ -1,7 +1,7 @@
 export const QUICK_THRESHOLD_MS = 10000; // 10 seconds
 export const QUESTION_TIMER_MS = 15000; // 15 seconds per question
 export const VOCAB_QUESTIONS_COUNT = 20;
-export const COMPREHENSION_QUESTIONS_COUNT = 3;
+export const COMPREHENSION_QUESTIONS_COUNT = 5;
 export const NEW_WORDS_PER_LESSON = 5;
 export const REVIEW_WORDS_PER_LESSON = 15;
 export const MAX_STREAK_STARS = 5;
