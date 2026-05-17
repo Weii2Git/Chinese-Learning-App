@@ -192,14 +192,14 @@ export function StudentDashboardClient({
           <h2 className="text-base font-bold text-white mb-4">⭐ Star History & Usage</h2>
           <div className="rounded-xl bg-slate-800 p-4 mb-5">
             <p className="text-sm font-semibold text-slate-300 mb-3">Use Stars</p>
-            <div className="flex gap-2 mb-3">
+            <div className="flex flex-col gap-2 mb-3">
               <input type="number" min="1" value={deductAmount} onChange={(e) => setDeductAmount(e.target.value)} placeholder="Amount"
-                className="w-24 rounded-lg bg-slate-700 border border-slate-600 focus:border-red-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
+                className="w-full rounded-lg bg-slate-700 border border-slate-600 focus:border-red-500 px-3 py-2.5 text-sm text-white focus:outline-none" />
               <input type="text" value={deductReason} onChange={(e) => setDeductReason(e.target.value)} placeholder="Reason"
-                className="flex-1 rounded-lg bg-slate-700 border border-slate-600 focus:border-red-500 px-3 py-2 text-sm text-white focus:outline-none"
+                className="w-full rounded-lg bg-slate-700 border border-slate-600 focus:border-red-500 px-3 py-2.5 text-sm text-white focus:outline-none"
                 onKeyDown={(e) => { if (e.key === "Enter") handleDeduct(); }} />
               <button onClick={handleDeduct} disabled={deducting || !deductAmount || !deductReason.trim()}
-                className="rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-40 px-4 py-2 text-sm font-semibold text-white transition-colors">
+                className="w-full rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-40 px-4 py-2.5 text-sm font-semibold text-white transition-colors">
                 {deducting ? "..." : "Deduct"}
               </button>
             </div>
