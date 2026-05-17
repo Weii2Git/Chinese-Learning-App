@@ -191,9 +191,9 @@ export function StudentDashboardClient({
       {/* Star panel */}
       {panel === "stars" && (
         <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
-          <h2 className="text-base font-bold text-white mb-4">⭐ Star History & Deduct</h2>
+          <h2 className="text-base font-bold text-white mb-4">⭐ Star History & Usage</h2>
           <div className="rounded-xl bg-slate-800 p-4 mb-5">
-            <p className="text-sm font-semibold text-slate-300 mb-3">Deduct Stars</p>
+            <p className="text-sm font-semibold text-slate-300 mb-3">Use Stars</p>
             <div className="flex gap-2 mb-3">
               <input type="number" min="1" value={deductAmount} onChange={(e) => setDeductAmount(e.target.value)} placeholder="Amount"
                 className="w-24 rounded-lg bg-slate-700 border border-slate-600 focus:border-red-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
