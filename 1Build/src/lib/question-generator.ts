@@ -6,6 +6,7 @@ import type {
 } from "./types";
 import { pinyin } from "pinyin-pro";
 import { lookupCompoundMeaning, COMPOUND_WORD_MAP } from "./compound-words";
+import { COMPREHENSION_QUESTIONS_COUNT } from "./constants";
 
 /**
  * Shuffle an array in place using Fisher-Yates algorithm.
@@ -392,7 +393,7 @@ export function buildTest(
   }
 
   const comprehensionWrapped: Question[] = comprehensionQuestions
-    .slice(0, 3)
+    .slice(0, COMPREHENSION_QUESTIONS_COUNT)
     .map((q) => ({
       kind: "comprehension" as const,
       data: q,
