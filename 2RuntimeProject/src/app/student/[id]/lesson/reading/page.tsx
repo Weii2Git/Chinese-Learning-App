@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLessonContext } from "@/lib/lesson-context";
 import { StoryDisplay } from "@/components/StoryDisplay";
+import { JokeLoader } from "@/components/JokeLoader";
 import Link from "next/link";
 import type { Word } from "@/lib/types";
 
@@ -104,27 +105,11 @@ export default function ReadingPage() {
   }
 
   if (phase === "init" || phase === "loading-words") {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-8 text-center">
-          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <h2 className="text-lg font-bold text-white">Selecting words for your lesson...</h2>
-          <p className="mt-2 text-slate-500 text-sm">This will just take a moment</p>
-        </div>
-      </div>
-    );
+    return <JokeLoader title="Selecting words for your lesson..." subtitle="This will just take a moment" />;
   }
 
   if (phase === "loading-story") {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-8 text-center">
-          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <h2 className="text-lg font-bold text-white">Generating your story...</h2>
-          <p className="mt-2 text-slate-500 text-sm">Creating a story with your new words</p>
-        </div>
-      </div>
-    );
+    return <JokeLoader title="Generating your story..." subtitle="Creating a story with your new words" />;
   }
 
   return (

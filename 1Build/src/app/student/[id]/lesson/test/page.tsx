@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLessonContext } from "@/lib/lesson-context";
 import { QuestionCard } from "@/components/QuestionCard";
+import { JokeLoader } from "@/components/JokeLoader";
 import { buildTest } from "@/lib/question-generator";
 import { QUESTION_TIMER_MS, QUICK_THRESHOLD_MS } from "@/lib/constants";
 import type { Question, QuestionResult, ComprehensionQuestion } from "@/lib/types";
@@ -112,15 +113,7 @@ export default function TestPage() {
   }
 
   if (phase === "loading") {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-8 text-center">
-          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <h2 className="text-lg font-bold text-white">Preparing your test...</h2>
-          <p className="mt-2 text-slate-500 text-sm">Generating questions based on your reading</p>
-        </div>
-      </div>
-    );
+    return <JokeLoader title="Preparing your test..." subtitle="Generating questions based on your reading" />;
   }
 
   const totalQuestions = questionsRef.current.length;

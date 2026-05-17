@@ -123,7 +123,7 @@ export function StudentDashboardClient({
           onClick={() => setShowCalendar(true)}
           className="rounded-xl bg-slate-900 border border-slate-800 hover:border-orange-500/50 p-4 text-center transition-colors"
         >
-          <p className="text-3xl font-bold text-orange-400">🔥{streakStars}</p>
+          <p className="text-2xl font-bold text-orange-400">🔥{streakStars}</p>
           <p className="text-sm text-slate-500 mt-1">Streak ↗</p>
           {streakFreezes > 0 && (
             <p className="text-xs text-blue-400 mt-0.5">🧊×{streakFreezes}</p>
@@ -175,8 +175,7 @@ export function StudentDashboardClient({
             <p className="text-2xl font-bold text-amber-400">{learningCount}</p>
             <p className="text-xs text-slate-400 mt-0.5">Learning ↗</p>
           </button>
-        </div>
-      </div>
+        </div>      </div>
 
       {/* Streak Calendar Modal */}
       {showCalendar && (
