@@ -208,15 +208,14 @@ export default function AdminPage() {
                   )}
                 </label>
                 <div className="flex gap-2">
-                  {/* Single toggle button for +/- */}
                   <button
                     onClick={() => setStarDelta((v) => {
                       const abs = Math.abs(parseInt(v || "0", 10) || 1);
                       return v.startsWith("-") ? String(abs) : "-" + abs;
                     })}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-bold border transition-colors min-w-[80px] ${starDelta.startsWith("-") ? "bg-red-500/20 border-red-500/50 text-red-300" : "bg-emerald-500/20 border-emerald-500/50 text-emerald-300"}`}
+                    className={`px-5 py-2.5 rounded-xl text-lg font-bold border transition-colors ${starDelta.startsWith("-") ? "bg-red-500/20 border-red-500/50 text-red-300" : "bg-emerald-500/20 border-emerald-500/50 text-emerald-300"}`}
                   >
-                    {starDelta.startsWith("-") ? "− Remove" : "+ Add"}
+                    {starDelta.startsWith("-") ? "−" : "+"}
                   </button>
                   <input
                     type="number" min="1"
@@ -271,8 +270,8 @@ export default function AdminPage() {
                       <div key={entry.id} className={`rounded-xl px-4 py-3 flex items-start gap-3 ${entry.source === "lesson" ? "bg-indigo-500/10 border border-indigo-500/20" : "bg-slate-800"}`}>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
-                            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${entry.source === "lesson" ? "bg-indigo-500/20 text-indigo-300" : "bg-slate-700 text-slate-400"}`}>
-                              {entry.source === "lesson" ? "Lesson" : "Admin"}
+                            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${entry.source === "lesson" ? "bg-indigo-500/20 text-indigo-300" : entry.source === "student" ? "bg-slate-600/40 text-slate-300" : "bg-slate-700 text-slate-400"}`}>
+                              {entry.source === "lesson" ? "Lesson" : entry.source === "student" ? "Student" : "Admin"}
                             </span>
                             <span className={`text-sm font-bold ${entry.delta > 0 ? "text-emerald-400" : "text-red-400"}`}>
                               {entry.delta > 0 ? `+${entry.delta}` : entry.delta}
