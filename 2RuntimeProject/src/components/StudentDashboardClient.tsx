@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { StreakCalendar } from "./StreakCalendar";
 
@@ -133,7 +132,7 @@ export function StudentDashboardClient({
         {/* Bonus (formerly Streak Stars) */}
         <div className="rounded-xl bg-slate-900 border border-slate-800 p-4 text-center">
           <div className="flex items-center justify-center gap-1.5">
-            <Image src="/assets/icons/heart.png" alt="bonus" width={20} height={20} unoptimized style={{ imageRendering: "pixelated" }} />
+            <span className="text-2xl">❤️</span>
             <span className="text-2xl font-bold text-red-400">{streakStars}</span>
           </div>
           <p className="text-sm text-slate-500 mt-1">Bonus</p>
@@ -145,7 +144,7 @@ export function StudentDashboardClient({
           className={`rounded-xl border p-4 text-center transition-colors ${panel === "stars" ? "bg-amber-500/10 border-amber-500/40" : "bg-slate-900 border-slate-800 hover:border-slate-600"}`}
         >
           <div className="flex items-center justify-center gap-1.5">
-            <Image src="/assets/icons/star.png" alt="stars" width={20} height={20} unoptimized style={{ imageRendering: "pixelated" }} />
+            <span className="text-2xl">⭐</span>
             <span className="text-2xl font-bold text-amber-400">{currentStars}</span>
           </div>
           <p className="text-sm text-slate-500 mt-1">Stars ↗</p>
