@@ -192,9 +192,13 @@ export default function RereadPage() {
             <span className="text-base text-slate-500">{currentIndex + 1} / {retestQuestions.length} · 80% to pass</span>
           </div>
           <div className="flex gap-1.5">
-            {retestQuestions.map((_, i) => (
-              <div key={i} className={`h-2 flex-1 rounded-full transition-colors ${i < currentIndex ? "bg-emerald-500" : i === currentIndex ? "bg-indigo-500" : "bg-slate-800"}`} />
-            ))}
+            {retestQuestions.map((_, i) => {
+              const result = loopAnswers[i];
+              let color = "bg-slate-800";
+              if (i === currentIndex) color = "bg-indigo-500";
+              else if (result) color = result.isCorrect ? "bg-emerald-500" : "bg-red-500";
+              return <div key={i} className={`h-2 flex-1 rounded-full transition-colors ${color}`} />;
+            })}
           </div>
         </div>
 

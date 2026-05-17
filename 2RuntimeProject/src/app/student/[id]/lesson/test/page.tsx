@@ -129,16 +129,15 @@ export default function TestPage() {
             <h1 className="text-3xl font-bold text-white">Test Time</h1>
             <span className="text-base text-slate-500">{currentIndex + 1} / {totalQuestions}</span>
           </div>
-          {/* Progress bar */}
+          {/* Progress bar — green=correct, red=incorrect, indigo=current, slate=unanswered */}
           <div className="flex gap-1.5">
-            {Array.from({ length: totalQuestions }, (_, i) => (
-              <div
-                key={i}
-                className={`h-2 flex-1 rounded-full transition-colors ${
-                  i < currentIndex ? "bg-emerald-500" : i === currentIndex ? "bg-indigo-500" : "bg-slate-800"
-                }`}
-              />
-            ))}
+            {Array.from({ length: totalQuestions }, (_, i) => {
+              const result = resultsRef.current[i];
+              let color = "bg-slate-800";
+              if (i === currentIndex) color = "bg-indigo-500";
+              else if (result) color = result.isCorrect ? "bg-emerald-500" : "bg-red-500";
+              return <div key={i} className={`h-2 flex-1 rounded-full transition-colors ${color}`} />;
+            })}
           </div>
         </div>
 

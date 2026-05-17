@@ -42,7 +42,7 @@ export function JokeLoader({ title, subtitle }: JokeLoaderProps) {
         setJokeIndex((i) => (i + 1) % JOKES.length);
         setVisible(true);
       }, 400);
-    }, 10000);
+    }, 6000);
 
     return () => clearInterval(interval);
   }, []);
