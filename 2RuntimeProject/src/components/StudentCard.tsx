@@ -36,7 +36,6 @@ export function StudentCard({ student }: { student: Student }) {
 
   // Flame is orange if a lesson was done today, grey otherwise
   const doneToday = student.lastActiveDate === getTodaySingapore();
-  const flameColor = doneToday ? "text-orange-400" : "text-slate-500";
 
   return (
     <Link
@@ -57,8 +56,8 @@ export function StudentCard({ student }: { student: Student }) {
           {/* Name + streak on same row */}
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-white font-bold text-xl truncate">{student.name}</h2>
-            <span className={`flex items-center gap-0.5 text-xl font-bold shrink-0 ${flameColor}`}>
-              🔥{student.streakStars}
+            <span className={`flex items-center gap-0.5 text-xl font-bold shrink-0 ${doneToday ? "text-orange-400" : "text-slate-500"}`}>
+              🔥<span>{student.streakStars}</span>
             </span>
           </div>
 
@@ -78,7 +77,7 @@ export function StudentCard({ student }: { student: Student }) {
               <Image src="/assets/icons/heart.png" alt="heart" width={22} height={22} unoptimized style={{ imageRendering: "pixelated" }} />
               <span>{student.streakStars}</span>
             </span>
-            <span className="w-10" />
+            <span className="w-14" />
             <span className="flex items-center gap-2 text-base text-slate-300">
               <Image src="/assets/icons/star.png" alt="star" width={22} height={22} unoptimized style={{ imageRendering: "pixelated" }} />
               <span>{student.performanceStars}</span>
