@@ -270,8 +270,8 @@ function parseStoryResponse(text: string): StoryResult {
   }
 
   return {
-    story: parsed.story.replace(/\*\*/g, ""),
-    segmented: parsed.segmented.replace(/\*\*/g, ""),
+    story: parsed.story.replace(/\*\*/g, "").replace(/\\n/g, "\n"),
+    segmented: parsed.segmented.replace(/\*\*/g, "").replace(/\\n/g, "\n"),
     wordMeanings: parsed.wordMeanings && typeof parsed.wordMeanings === "object"
       ? parsed.wordMeanings as Record<string, string>
       : {},

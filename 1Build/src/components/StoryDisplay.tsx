@@ -47,6 +47,11 @@ export function StoryDisplay({ story, segmentedStory, newWords, onWordLookup, wo
   const renderStory = () => {
     const words = getWords();
     return words.map((segment, i) => {
+      // Render newlines as paragraph breaks
+      if (segment === "\n" || segment === "\\n" || segment.trim() === "") {
+        return <br key={i} />;
+      }
+
       const hasChinese = [...segment].some(isChinese);
       if (!hasChinese) return <span key={i}>{segment}</span>;
 
