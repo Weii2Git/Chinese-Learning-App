@@ -6,15 +6,10 @@ import type { Student } from "./types";
 
 // Fixed UUIDs for seed students — stable across reinitializations
 export const SEED_STUDENTS: Student[] = [
-  { id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d", name: "Ryan",           currentLevel: "2-b", streakStars: 0, streakFreezes: 0, performanceStars: 0,   lastActiveDate: null, lessonsCompleted: 0 },
-  { id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e", name: "Patrick",        currentLevel: "3-b", streakStars: 0, streakFreezes: 0, performanceStars: 0,   lastActiveDate: null, lessonsCompleted: 0 },
-  { id: "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f", name: "Cony Da Banana", currentLevel: "3-b", streakStars: 0, streakFreezes: 0, performanceStars: 0,   lastActiveDate: null, lessonsCompleted: 0 },
-  { id: "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a", name: "Mommy",          currentLevel: "4-a", streakStars: 0, streakFreezes: 0, performanceStars: 0,   lastActiveDate: null, lessonsCompleted: 0 },
-];
-    performanceStars: 0,
-    lastActiveDate: null,
-    lessonsCompleted: 0,
-  },
+  { id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d", name: "Ryan",           currentLevel: "2-b", streakStars: 0, streakFreezes: 0, performanceStars: 0, lastActiveDate: null, lessonsCompleted: 0 },
+  { id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e", name: "Patrick",        currentLevel: "3-b", streakStars: 0, streakFreezes: 0, performanceStars: 0, lastActiveDate: null, lessonsCompleted: 0 },
+  { id: "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f", name: "Cony Da Banana", currentLevel: "3-b", streakStars: 0, streakFreezes: 0, performanceStars: 0, lastActiveDate: null, lessonsCompleted: 0 },
+  { id: "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a", name: "Mommy",          currentLevel: "4-a", streakStars: 0, streakFreezes: 0, performanceStars: 0, lastActiveDate: null, lessonsCompleted: 0 },
 ];
 
 /**
