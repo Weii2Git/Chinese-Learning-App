@@ -257,7 +257,7 @@ export async function completeLessonAndUpdateState(
   // On the first lesson of the day, also add the current streak count as a bonus
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Singapore" });
   const isFirstLessonToday = student.lastActiveDate !== today;
-  const streakBonus = isFirstLessonToday ? student.streakStars : 0;
+  const streakBonus = isFirstLessonToday ? Math.min(student.streakStars, 5) : 0;
   const totalStarsToAdd = performanceStarsEarned + streakBonus;
 
   // Run all independent updates in parallel
