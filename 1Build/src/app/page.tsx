@@ -4,7 +4,7 @@ import { StudentCard } from "@/components/StudentCard";
 
 export const dynamic = "force-dynamic";
 
-const DISPLAY_ORDER = ["Patrick", "Cony Da Banana", "Mommy", "Ryan"];
+const DISPLAY_ORDER = ["Patrick", "Cony Da Banana", "Mommy", "Ryan", "Gala", "Jonathan"];
 
 export default async function Home() {
   const students = await getAllStudents();

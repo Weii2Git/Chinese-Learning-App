@@ -4,6 +4,7 @@
     "name": "Ryan",
     "currentLevel": "2-b",
     "streakStars": 0,
+    "streakFreezes": 0,
     "performanceStars": 0,
     "lastActiveDate": null,
     "lessonsCompleted": 0
@@ -13,6 +14,7 @@
     "name": "Patrick",
     "currentLevel": "3-b",
     "streakStars": 0,
+    "streakFreezes": 0,
     "performanceStars": 0,
     "lastActiveDate": null,
     "lessonsCompleted": 0
@@ -22,6 +24,7 @@
     "name": "Cony Da Banana",
     "currentLevel": "3-b",
     "streakStars": 1,
+    "streakFreezes": 0,
     "performanceStars": 12,
     "lastActiveDate": "2026-05-09",
     "lessonsCompleted": 1
@@ -31,8 +34,29 @@
     "name": "Mommy",
     "currentLevel": "4-a",
     "streakStars": 2,
+    "streakFreezes": 0,
     "performanceStars": 119,
     "lastActiveDate": "2026-05-09",
     "lessonsCompleted": 7
+  },
+  {
+    "id": "e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b",
+    "name": "Gala",
+    "currentLevel": "2-b",
+    "streakStars": 0,
+    "streakFreezes": 0,
+    "performanceStars": 0,
+    "lastActiveDate": null,
+    "lessonsCompleted": 0
+  },
+  {
+    "id": "f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c",
+    "name": "Jonathan",
+    "currentLevel": "2-b",
+    "streakStars": 0,
+    "streakFreezes": 0,
+    "performanceStars": 0,
+    "lastActiveDate": null,
+    "lessonsCompleted": 0
   }
 ]
