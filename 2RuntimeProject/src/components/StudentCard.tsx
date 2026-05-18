@@ -18,6 +18,8 @@ const PLAYER_IMAGES: Record<string, string> = {
   "Ryan":           "/assets/characters/char_ryan.png",
   "Cony Da Banana": "/assets/characters/char_cony.png",
   "Mommy":          "/assets/characters/char_mommy.png",
+  "Gala":           "/assets/characters/char_Gala.png",
+  "Jonathan":       "/assets/characters/char_Jonathan.png",
 };
 
 const PLAYER_SCALE: Record<string, number> = {
