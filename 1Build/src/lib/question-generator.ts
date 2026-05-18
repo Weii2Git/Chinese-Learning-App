@@ -399,5 +399,5 @@ export function buildTest(
       data: q,
     }));
 
-  return [...vocabQuestions, ...comprehensionWrapped];
+  return [...comprehensionWrapped, ...vocabQuestions];
 }
