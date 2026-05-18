@@ -1,0 +1,8 @@
+cd 2RuntimeProject
+npm run dev
+
+
+cd "c:\Kiro\Chinese Learning App v3"
+git add .
+git commit -m "describe what you changed"
+git push
