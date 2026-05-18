@@ -79,10 +79,10 @@ export function StudentCard({ student }: { student: Student }) {
 
           {/* Stats row: heart / star / lessons — evenly spaced */}
           <div className="flex items-center justify-around">
-            {/* Heart */}
+            {/* Heart (Bonus - capped at 5) */}
             <div className="flex flex-col items-center gap-1">
               <span className="text-xl">❤️</span>
-              <span className="text-sm font-semibold text-slate-300">{student.streakStars}</span>
+              <span className="text-sm font-semibold text-slate-300">{Math.min(student.streakStars, 5)}</span>
             </div>
             {/* Star */}
             <div className="flex flex-col items-center gap-1">
