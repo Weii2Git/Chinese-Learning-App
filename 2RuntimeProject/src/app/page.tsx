@@ -17,12 +17,20 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center px-8 py-16">
-      <header className="mb-14 text-center">
-        <div className="inline-flex items-center gap-4 mb-5">
-          <span className="bg-red-500 text-white text-sm font-bold px-3 py-1.5 rounded">CN</span>
-          <h1 className="text-5xl font-bold text-white tracking-tight">Chinese Learning</h1>
+      <header className="mb-14 w-full flex justify-center">
+        <div className="inline-flex items-center gap-4">
+          <img
+            src="/assets/icons/dragon_logo.png"
+            alt="Dragon"
+            width="167"
+            height="167"
+            style={{ width: "167px", height: "167px", objectFit: "contain", alignSelf: "center" }}
+          />
+          <div>
+            <h1 className="text-5xl font-bold text-white tracking-tight">The Daily Dragon Quest</h1>
+            <p className="text-slate-400 text-lg mt-1 text-center">Select your profile to start learning</p>
+          </div>
         </div>
-        <p className="text-slate-400 text-lg">Select your profile to start learning</p>
       </header>
 
       <main className="grid w-full max-w-4xl grid-cols-1 sm:grid-cols-2 gap-5">

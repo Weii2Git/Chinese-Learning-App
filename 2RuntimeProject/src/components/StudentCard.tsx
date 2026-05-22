@@ -7,8 +7,8 @@ const PLAYER_COLORS: Record<string, { accent: string; ring: string }> = {
   "Ryan":           { accent: "from-red-500 to-red-700",       ring: "ring-red-500" },
   "Cony Da Banana": { accent: "from-blue-500 to-blue-700",     ring: "ring-blue-500" },
   "Mommy":          { accent: "from-purple-500 to-purple-700", ring: "ring-purple-500" },
-  "Gala":           { accent: "from-teal-500 to-teal-700",     ring: "ring-teal-500" },
-  "Jonathan":       { accent: "from-orange-500 to-orange-700", ring: "ring-orange-500" },
+  "Gala":           { accent: "from-cyan-500 to-cyan-700",     ring: "ring-cyan-500" },
+  "Jonathan":       { accent: "from-amber-500 to-amber-700",   ring: "ring-amber-500" },
 };
 
 const DEFAULT_COLOR = { accent: "from-slate-500 to-slate-700", ring: "ring-slate-500" };
