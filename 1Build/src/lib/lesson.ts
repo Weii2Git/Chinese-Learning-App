@@ -3,6 +3,7 @@ import {
   NEW_WORDS_PER_LESSON,
   QUICK_THRESHOLD_MS,
   REVIEW_WORDS_PER_LESSON,
+  REVIEW_WORDS_BUFFER,
 } from "./constants";
 import { readKnowledgeRecords, bulkUpdate } from "./knowledge";
 import { getStudent, updateStudent, checkAndAdvanceLevel } from "./student";
@@ -91,7 +92,7 @@ export async function selectWordsForLesson(
   // Review words: use SRS prioritization for "known" state words
   const knownRecords = studentRecords.filter((r) => r.state === "known");
   const now = new Date().toISOString();
-  const prioritizedRecords = prioritizeReviewWords(knownRecords, now, REVIEW_WORDS_PER_LESSON);
+  const prioritizedRecords = prioritizeReviewWords(knownRecords, now, REVIEW_WORDS_PER_LESSON + REVIEW_WORDS_BUFFER);
 
   // Map prioritized records back to Word objects
   const wordMap = new Map<string, Word>();
@@ -125,8 +126,8 @@ export async function selectWordsForLesson(
     })
     .filter((w): w is Word => w !== undefined);
 
-  // If fewer than 15 review words, fill remaining slots from current level
-  if (reviewWords.length < REVIEW_WORDS_PER_LESSON) {
+  // If fewer than 20 review words, fill remaining slots from current level
+  if (reviewWords.length < REVIEW_WORDS_PER_LESSON + REVIEW_WORDS_BUFFER) {
     const selectedIds = new Set([
       ...newWords.map((w) => w.id),
       ...reviewWords.map((w) => w.id),
@@ -136,13 +137,13 @@ export async function selectWordsForLesson(
       (w) => !selectedIds.has(w.id)
     );
 
-    const slotsToFill = REVIEW_WORDS_PER_LESSON - reviewWords.length;
+    const slotsToFill = (REVIEW_WORDS_PER_LESSON + REVIEW_WORDS_BUFFER) - reviewWords.length;
     const fillWords = fillCandidates.slice(0, slotsToFill);
     reviewWords = [...reviewWords, ...fillWords];
   }
 
-  // If total (new + review) is still less than 20, increase new words to fill the gap
-  const totalTarget = NEW_WORDS_PER_LESSON + REVIEW_WORDS_PER_LESSON; // 20
+  // If total (new + review) is still less than 25, increase new words to fill the gap
+  const totalTarget = NEW_WORDS_PER_LESSON + REVIEW_WORDS_PER_LESSON + REVIEW_WORDS_BUFFER; // 25
   const totalSelected = newWords.length + reviewWords.length;
   if (totalSelected < totalTarget && allNewWordCandidates.length > newWords.length) {
     const extraNeeded = totalTarget - totalSelected;

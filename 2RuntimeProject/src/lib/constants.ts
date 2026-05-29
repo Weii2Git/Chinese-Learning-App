@@ -4,6 +4,7 @@ export const VOCAB_QUESTIONS_COUNT = 20;
 export const COMPREHENSION_QUESTIONS_COUNT = 5;
 export const NEW_WORDS_PER_LESSON = 5;
 export const REVIEW_WORDS_PER_LESSON = 15;
+export const REVIEW_WORDS_BUFFER = 5; // extra review words for test backup when deduplication removes questions
 export const MAX_STREAK_STARS = 5;
 export const LEVEL_ADVANCE_THRESHOLD = 0.9; // 90%
 export const STORY_MIN_CHARS = 300;
