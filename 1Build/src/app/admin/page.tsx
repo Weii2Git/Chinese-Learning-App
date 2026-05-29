@@ -324,51 +324,7 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* ── 2. TEST SETTINGS ── */}
-        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
-          <h2 className="text-lg font-bold text-white mb-1">⚙️ Test Settings</h2>
-          <p className="text-slate-500 text-sm mb-5">Configure test question counts and star rewards</p>
-
-          {settingsLoaded && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Vocab Questions</label>
-                  <input type="number" min="5" max="30" value={vocabCount} onChange={(e) => setVocabCount(Number(e.target.value))}
-                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Comprehension Questions</label>
-                  <input type="number" min="1" max="10" value={compCount} onChange={(e) => setCompCount(Number(e.target.value))}
-                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">⭐ per Fast Correct (Known)</label>
-                  <input type="number" min="0" max="5" value={starsFast} onChange={(e) => setStarsFast(Number(e.target.value))}
-                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">⭐ per Slow Correct (Learning)</label>
-                  <input type="number" min="0" max="5" value={starsSlow} onChange={(e) => setStarsSlow(Number(e.target.value))}
-                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
-                </div>
-              </div>
-
-              {settingsMsg && (
-                <p className={`text-xs ${settingsMsg.type === "success" ? "text-emerald-400" : "text-red-400"}`}>{settingsMsg.text}</p>
-              )}
-
-              <button onClick={handleSaveSettings} disabled={settingsSaving}
-                className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 px-4 py-2.5 text-sm font-semibold text-white transition-colors">
-                {settingsSaving ? "Saving..." : "Save Settings"}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* ── 3. WORD STATUS ── */}
+        {/* ── 2. WORD STATUS ── */}
         <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
           <h2 className="text-lg font-bold text-white mb-1">📚 Student Word Status</h2>
           <p className="text-slate-500 text-sm mb-5">View learned, learning, and upcoming words per student</p>
@@ -441,6 +397,50 @@ export default function AdminPage() {
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── 3. TEST SETTINGS ── */}
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
+          <h2 className="text-lg font-bold text-white mb-1">⚙️ Test Settings</h2>
+          <p className="text-slate-500 text-sm mb-5">Configure test question counts and star rewards</p>
+
+          {settingsLoaded && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Vocab Questions</label>
+                  <input type="number" min="5" max="30" value={vocabCount} onChange={(e) => setVocabCount(Number(e.target.value))}
+                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Comprehension Questions</label>
+                  <input type="number" min="1" max="10" value={compCount} onChange={(e) => setCompCount(Number(e.target.value))}
+                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">⭐ per Fast Correct (Known)</label>
+                  <input type="number" min="0" max="5" value={starsFast} onChange={(e) => setStarsFast(Number(e.target.value))}
+                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">⭐ per Slow Correct (Learning)</label>
+                  <input type="number" min="0" max="5" value={starsSlow} onChange={(e) => setStarsSlow(Number(e.target.value))}
+                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
+                </div>
+              </div>
+
+              {settingsMsg && (
+                <p className={`text-xs ${settingsMsg.type === "success" ? "text-emerald-400" : "text-red-400"}`}>{settingsMsg.text}</p>
+              )}
+
+              <button onClick={handleSaveSettings} disabled={settingsSaving}
+                className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 px-4 py-2.5 text-sm font-semibold text-white transition-colors">
+                {settingsSaving ? "Saving..." : "Save Settings"}
+              </button>
             </div>
           )}
         </div>
