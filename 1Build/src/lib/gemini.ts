@@ -147,7 +147,7 @@ function buildComprehensionPrompt(params: ComprehensionParams): string {
     ? `\n以下问题已经问过，请不要重复：\n${params.previousQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n`
     : "";
 
-  return `你是一位中文阅读理解出题专家。请根据以下故事生成${COMPREHENSION_QUESTIONS_COUNT + 1}道阅读理解选择题。
+  return `你是一位中文阅读理解出题专家。请根据以下故事生成${COMPREHENSION_QUESTIONS_COUNT + 2}道阅读理解选择题。
 
 故事内容：
 ${params.story}
