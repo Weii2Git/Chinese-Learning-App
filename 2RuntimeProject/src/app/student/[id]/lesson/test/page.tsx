@@ -46,24 +46,26 @@ export default function TestPage() {
     try {
       const level = newWords[0]?.level || reviewWords[0]?.level || "1-a";
 
-      // Fetch saved compound context and comprehension questions in parallel
-      const [compRes, compQRes] = await Promise.all([
+      // Fetch saved compound context, comprehension questions, and settings in parallel
+      const [compRes, compQRes, settingsRes] = await Promise.all([
         fetch(`/api/students/${studentId}/compounds`),
         fetch("/api/generate-comprehension", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ story, level }),
         }),
+        fetch("/api/admin/settings"),
       ]);
 
       const knowledgeRecords = compRes.ok ? await compRes.json() : [];
+      const settings = settingsRes.ok ? await settingsRes.json() : { vocabQuestionsCount: 20, comprehensionQuestionsCount: 5 };
 
       if (!compQRes.ok) {
         const data = await compQRes.json();
         throw new Error(data.error || "Failed to generate comprehension questions");
       }
       const { questions: comprehensionQuestions } = (await compQRes.json()) as { questions: ComprehensionQuestion[] };
-      const fullTest = buildTest(newWords, reviewWords, comprehensionQuestions, lessonState?.segmentedStory, lessonState?.wordMeanings, lessonState?.lookedUpWords, knowledgeRecords);
+      const fullTest = buildTest(newWords, reviewWords, comprehensionQuestions, lessonState?.segmentedStory, lessonState?.wordMeanings, lessonState?.lookedUpWords, knowledgeRecords, settings.vocabQuestionsCount, settings.comprehensionQuestionsCount);
       questionsRef.current = fullTest;
       setQuestions(fullTest);
       markNewRoundStart(); // mark where this round's results start

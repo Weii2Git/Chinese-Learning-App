@@ -11,6 +11,7 @@ import { updateStreakStars } from "./stars";
 import { getWordsForLevel, getAllWords } from "./word-list";
 import { prioritizeReviewWords, advanceInterval, resetInterval } from "./srs";
 import { appendStarLog } from "@/app/api/admin/adjust-stars/route";
+import { getAppSettings } from "@/app/api/admin/settings/route";
 import type {
   Word,
   WordSelection,
@@ -184,15 +185,22 @@ export async function completeLessonAndUpdateState(
 
   const now = new Date().toISOString();
 
+  // Load dynamic settings for star awards
+  const settings = await getAppSettings();
+
   // Classify answers and build knowledge updates (vocab questions only)
   const knowledgeUpdates: KnowledgeUpdate[] = [];
-  // Count ALL correct answers (vocab + comprehension) for star awards
-  let correctCount = 0;
+  // Count stars based on settings
+  let starsEarned = 0;
 
   for (const result of results) {
     // Count comprehension correct answers for stars
     if (result.question.kind === "comprehension") {
-      if (result.isCorrect) correctCount++;
+      if (result.isCorrect) {
+        starsEarned += result.elapsedMs <= QUICK_THRESHOLD_MS
+          ? settings.starsPerCorrectFast
+          : settings.starsPerCorrectSlow;
+      }
       continue;
     }
 
@@ -206,11 +214,11 @@ export async function completeLessonAndUpdateState(
     if (result.isCorrect && result.elapsedMs <= QUICK_THRESHOLD_MS) {
       // Quick correct → "known"
       newState = "known";
-      correctCount++;
+      starsEarned += settings.starsPerCorrectFast;
     } else if (result.isCorrect && result.elapsedMs > QUICK_THRESHOLD_MS) {
       // Slow correct → "learning"
       newState = "learning";
-      correctCount++;
+      starsEarned += settings.starsPerCorrectSlow;
     } else {
       // Wrong (including timer expired) → "don't know"
       newState = "don't know";
@@ -265,8 +273,8 @@ export async function completeLessonAndUpdateState(
   // Bulk update knowledge states
   await bulkUpdate(studentId, knowledgeUpdates);
 
-  // Award performance stars: 1 per correct answer (vocab + comprehension)
-  const performanceStarsEarned = correctCount;
+  // Award performance stars based on dynamic settings
+  const performanceStarsEarned = starsEarned;
 
   // On the first lesson of the day, also add the current streak count as a bonus
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Singapore" });

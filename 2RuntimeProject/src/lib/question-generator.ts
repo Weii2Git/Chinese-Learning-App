@@ -6,7 +6,6 @@ import type {
 } from "./types";
 import { pinyin } from "pinyin-pro";
 import { lookupCompoundMeaning, COMPOUND_WORD_MAP } from "./compound-words";
-import { COMPREHENSION_QUESTIONS_COUNT } from "./constants";
 
 /**
  * Shuffle an array in place using Fisher-Yates algorithm.
@@ -261,14 +260,15 @@ export function buildTest(
   segmentedStory?: string,
   wordMeanings?: Record<string, string>,
   lookedUpWords?: string[],
-  knowledgeRecords?: Array<{ wordId: string; compoundWord?: string; compoundMeaning?: string }>
+  knowledgeRecords?: Array<{ wordId: string; compoundWord?: string; compoundMeaning?: string }>,
+  vocabTarget?: number,
+  comprehensionTarget?: number
 ): Question[] {
   const allWords = [...newWords, ...reviewWords];
+  const targetWordCount = vocabTarget ?? 20;
+  const compCount = comprehensionTarget ?? 5;
 
-  // Select up to 15 words to test
-  // Priority: words the user looked up > new words > review words
   const wordsToTest: { word: Word; isNew: boolean }[] = [];
-  const targetWordCount = 20;
   const addedIds = new Set<string>();
 
   // First: add looked-up words (these are words the user clicked during reading)
@@ -393,7 +393,7 @@ export function buildTest(
   }
 
   const comprehensionWrapped: Question[] = comprehensionQuestions
-    .slice(0, COMPREHENSION_QUESTIONS_COUNT)
+    .slice(0, compCount)
     .map((q) => ({
       kind: "comprehension" as const,
       data: q,

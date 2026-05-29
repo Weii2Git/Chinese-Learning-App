@@ -58,6 +58,15 @@ export default function AdminPage() {
   const [starLog, setStarLog] = useState<StarAdjustmentEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(false);
 
+  // Test settings state
+  const [vocabCount, setVocabCount] = useState(20);
+  const [compCount, setCompCount] = useState(5);
+  const [starsFast, setStarsFast] = useState(1);
+  const [starsSlow, setStarsSlow] = useState(1);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsMsg, setSettingsMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   // Word status
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [wordData, setWordData] = useState<StudentWordData | null>(null);
@@ -70,6 +79,13 @@ export default function AdminPage() {
       if (data.configured) { setStatus("configured"); setMasked(data.masked); }
       else setStatus("not_configured");
     }).catch(() => setStatus("not_configured"));
+    fetch("/api/admin/settings").then((r) => r.json()).then((data) => {
+      setVocabCount(data.vocabQuestionsCount);
+      setCompCount(data.comprehensionQuestionsCount);
+      setStarsFast(data.starsPerCorrectFast);
+      setStarsSlow(data.starsPerCorrectSlow);
+      setSettingsLoaded(true);
+    }).catch(() => setSettingsLoaded(true));
   }, []);
 
   // Load per-student star log when student is selected
@@ -130,6 +146,21 @@ export default function AdminPage() {
     } catch (err: unknown) {
       setStarMsg({ type: "error", text: err instanceof Error ? err.message : "Failed" });
     } finally { setStarSaving(false); }
+  }
+
+  async function handleSaveSettings() {
+    setSettingsSaving(true); setSettingsMsg(null);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vocabQuestionsCount: vocabCount, comprehensionQuestionsCount: compCount, starsPerCorrectFast: starsFast, starsPerCorrectSlow: starsSlow }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      setSettingsMsg({ type: "success", text: "Settings saved!" });
+    } catch (err: unknown) {
+      setSettingsMsg({ type: "error", text: err instanceof Error ? err.message : "Failed" });
+    } finally { setSettingsSaving(false); }
   }
 
   async function handleSave() {
@@ -293,7 +324,51 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* ── 2. WORD STATUS ── */}
+        {/* ── 2. TEST SETTINGS ── */}
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
+          <h2 className="text-lg font-bold text-white mb-1">⚙️ Test Settings</h2>
+          <p className="text-slate-500 text-sm mb-5">Configure test question counts and star rewards</p>
+
+          {settingsLoaded && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Vocab Questions</label>
+                  <input type="number" min="5" max="30" value={vocabCount} onChange={(e) => setVocabCount(Number(e.target.value))}
+                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Comprehension Questions</label>
+                  <input type="number" min="1" max="10" value={compCount} onChange={(e) => setCompCount(Number(e.target.value))}
+                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">⭐ per Fast Correct (Known)</label>
+                  <input type="number" min="0" max="5" value={starsFast} onChange={(e) => setStarsFast(Number(e.target.value))}
+                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">⭐ per Slow Correct (Learning)</label>
+                  <input type="number" min="0" max="5" value={starsSlow} onChange={(e) => setStarsSlow(Number(e.target.value))}
+                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
+                </div>
+              </div>
+
+              {settingsMsg && (
+                <p className={`text-xs ${settingsMsg.type === "success" ? "text-emerald-400" : "text-red-400"}`}>{settingsMsg.text}</p>
+              )}
+
+              <button onClick={handleSaveSettings} disabled={settingsSaving}
+                className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 px-4 py-2.5 text-sm font-semibold text-white transition-colors">
+                {settingsSaving ? "Saving..." : "Save Settings"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── 3. WORD STATUS ── */}
         <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
           <h2 className="text-lg font-bold text-white mb-1">📚 Student Word Status</h2>
           <p className="text-slate-500 text-sm mb-5">View learned, learning, and upcoming words per student</p>
@@ -370,7 +445,7 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* ── 3. API SETUP ── */}
+        {/* ── 4. API SETUP ── */}
         <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
           <h2 className="text-lg font-bold text-white mb-1">🔑 API Setup</h2>
           <p className="text-slate-500 text-sm mb-5">Configure your Gemini API key for story generation</p>
