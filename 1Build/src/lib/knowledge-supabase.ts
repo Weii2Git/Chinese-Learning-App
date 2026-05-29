@@ -183,6 +183,35 @@ export async function bulkUpdate(
 }
 
 /**
+ * Get total known and learning counts across ALL levels for a student.
+ */
+export async function getTotalKnowledgeCounts(
+  studentId: string
+): Promise<{ known: number; learning: number }> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from('knowledge_records')
+    .select('state')
+    .eq('student_id', studentId)
+    .in('state', ['known', 'learning']);
+
+  if (error) {
+    throw new Error(`getTotalKnowledgeCounts failed: ${error.message}`);
+  }
+
+  let known = 0;
+  let learning = 0;
+
+  for (const row of data ?? []) {
+    if (row.state === 'known') known++;
+    else if (row.state === 'learning') learning++;
+  }
+
+  return { known, learning };
+}
+
+/**
  * Get a summary of knowledge states for a student at a specific level.
  * Counts records by state from Supabase, and total words from the word list file.
  */

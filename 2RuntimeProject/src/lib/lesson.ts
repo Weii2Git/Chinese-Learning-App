@@ -81,10 +81,12 @@ export async function selectWordsForLesson(
     return state === "learning" || state === "don't know";
   });
 
-  const newWords: Word[] = [
+  const allNewWordCandidates: Word[] = [
     ...newWordCandidatesCurrentLevel,
     ...newWordCandidatesEarlierLevels,
-  ].slice(0, NEW_WORDS_PER_LESSON);
+  ];
+
+  let newWords: Word[] = allNewWordCandidates.slice(0, NEW_WORDS_PER_LESSON);
 
   // Review words: use SRS prioritization for "known" state words
   const knownRecords = studentRecords.filter((r) => r.state === "known");
@@ -123,8 +125,7 @@ export async function selectWordsForLesson(
     })
     .filter((w): w is Word => w !== undefined);
 
-  // If fewer than 10 review words, fill remaining slots from current level
-  // words that aren't already selected as new or review words
+  // If fewer than 15 review words, fill remaining slots from current level
   if (reviewWords.length < REVIEW_WORDS_PER_LESSON) {
     const selectedIds = new Set([
       ...newWords.map((w) => w.id),
@@ -138,6 +139,18 @@ export async function selectWordsForLesson(
     const slotsToFill = REVIEW_WORDS_PER_LESSON - reviewWords.length;
     const fillWords = fillCandidates.slice(0, slotsToFill);
     reviewWords = [...reviewWords, ...fillWords];
+  }
+
+  // If total (new + review) is still less than 20, increase new words to fill the gap
+  const totalTarget = NEW_WORDS_PER_LESSON + REVIEW_WORDS_PER_LESSON; // 20
+  const totalSelected = newWords.length + reviewWords.length;
+  if (totalSelected < totalTarget && allNewWordCandidates.length > newWords.length) {
+    const extraNeeded = totalTarget - totalSelected;
+    const extraNew = allNewWordCandidates
+      .slice(newWords.length)
+      .filter((w) => !reviewWords.some((r) => r.id === w.id))
+      .slice(0, extraNeeded);
+    newWords = [...newWords, ...extraNew];
   }
 
   return { newWords, reviewWords };

@@ -60,6 +60,15 @@ export async function bulkUpdate(
 }
 
 /**
+ * Get total known and learning counts across ALL levels for a student.
+ */
+export async function getTotalKnowledgeCounts(
+  studentId: string
+): Promise<{ known: number; learning: number }> {
+  return getImpl().getTotalKnowledgeCounts(studentId);
+}
+
+/**
  * Get a summary of knowledge states for a student at a specific level.
  * Returns counts of known, learning, and don't know words, plus the total
  * and the percentage of known words.

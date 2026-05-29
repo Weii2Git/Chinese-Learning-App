@@ -147,7 +147,7 @@ function buildComprehensionPrompt(params: ComprehensionParams): string {
     ? `\n以下问题已经问过，请不要重复：\n${params.previousQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n`
     : "";
 
-  return `你是一位中文阅读理解出题专家。请根据以下故事生成${COMPREHENSION_QUESTIONS_COUNT}道阅读理解选择题。
+  return `你是一位中文阅读理解出题专家。请根据以下故事生成${COMPREHENSION_QUESTIONS_COUNT + 1}道阅读理解选择题。
 
 故事内容：
 ${params.story}
@@ -188,35 +188,38 @@ function parseComprehensionResponse(text: string): ComprehensionQuestion[] {
     throw new Error("Response is not an array");
   }
 
-  if (parsed.length !== COMPREHENSION_QUESTIONS_COUNT) {
+  if (parsed.length < COMPREHENSION_QUESTIONS_COUNT) {
     throw new Error(
-      `Expected ${COMPREHENSION_QUESTIONS_COUNT} questions, got ${parsed.length}`
+      `Expected at least ${COMPREHENSION_QUESTIONS_COUNT} questions, got ${parsed.length}`
     );
   }
 
-  const questions: ComprehensionQuestion[] = parsed.map((item: unknown, index: number) => {
+  // Take the first N valid questions (we ask for N+1 to have a buffer)
+  const questions: ComprehensionQuestion[] = [];
+  for (const item of parsed) {
+    if (questions.length >= COMPREHENSION_QUESTIONS_COUNT) break;
     const q = item as Record<string, unknown>;
     if (
       typeof q.question !== "string" ||
       typeof q.correctAnswer !== "string" ||
       !Array.isArray(q.options) ||
-      q.options.length !== 4
+      q.options.length !== 4 ||
+      !q.options.includes(q.correctAnswer)
     ) {
-      throw new Error(`Question ${index + 1} has invalid format`);
+      continue; // skip invalid questions
     }
-
-    if (!q.options.includes(q.correctAnswer)) {
-      throw new Error(
-        `Question ${index + 1}: correctAnswer is not in options`
-      );
-    }
-
-    return {
+    questions.push({
       question: q.question,
       correctAnswer: q.correctAnswer,
       options: q.options as string[],
-    };
-  });
+    });
+  }
+
+  if (questions.length < COMPREHENSION_QUESTIONS_COUNT) {
+    throw new Error(
+      `Only ${questions.length} valid questions out of ${parsed.length} returned`
+    );
+  }
 
   return questions;
 }

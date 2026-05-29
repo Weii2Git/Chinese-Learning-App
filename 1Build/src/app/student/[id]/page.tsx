@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getStudent } from "@/lib/student";
-import { getKnowledgeSummary } from "@/lib/knowledge";
+import { getKnowledgeSummary, getTotalKnowledgeCounts } from "@/lib/knowledge";
 import { LevelBadge } from "@/components/LevelBadge";
 import { checkAndResetStreak } from "@/lib/stars";
 import { StudentDashboardClient } from "@/components/StudentDashboardClient";
@@ -49,6 +49,7 @@ export default async function StudentDashboardPage({
   const freshStudent = (await getStudent(id)) ?? student;
 
   const summary = await getKnowledgeSummary(freshStudent.id, freshStudent.currentLevel);
+  const totalCounts = await getTotalKnowledgeCounts(freshStudent.id);
 
   const characterImg = PLAYER_IMAGES[freshStudent.name];
   const scale = PLAYER_SCALE[freshStudent.name] ?? 1;
@@ -96,8 +97,8 @@ export default async function StudentDashboardPage({
         streakStars={freshStudent.streakStars}
         streakFreezes={freshStudent.streakFreezes ?? 0}
         performanceStars={freshStudent.performanceStars}
-        knownCount={summary.known}
-        learningCount={summary.learning}
+        knownCount={totalCounts.known}
+        learningCount={totalCounts.learning}
         dontKnowCount={summary.dontKnow}
         knownPercentage={summary.knownPercentage}
         currentLevel={freshStudent.currentLevel}
