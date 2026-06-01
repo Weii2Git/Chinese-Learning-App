@@ -102,6 +102,8 @@ export default async function StudentDashboardPage({
         dontKnowCount={summary.dontKnow}
         knownPercentage={summary.knownPercentage}
         currentLevel={freshStudent.currentLevel}
+        levelKnownCount={summary.known}
+        levelTotal={summary.known + summary.learning + summary.dontKnow}
       />
     </div>
   );

@@ -33,6 +33,8 @@ interface Props {
   dontKnowCount: number;
   knownPercentage: number;
   currentLevel: string;
+  levelKnownCount: number;
+  levelTotal: number;
 }
 
 export function StudentDashboardClient({
@@ -46,6 +48,8 @@ export function StudentDashboardClient({
   dontKnowCount,
   knownPercentage,
   currentLevel,
+  levelKnownCount,
+  levelTotal,
 }: Props) {
   const [panel, setPanel] = useState<null | "stars" | "known" | "learning">(null);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -175,8 +179,8 @@ export function StudentDashboardClient({
         {/* Level progress bar */}
         <div>
           <div className="flex items-center justify-between text-xs text-slate-400 mb-1.5">
-            <span>Level {currentLevel} Progress</span>
-            <span className="font-semibold text-slate-300">{Math.round(progress)}% known</span>
+            <span>Level {currentLevel} Progress — {levelKnownCount}/{levelTotal} known</span>
+            <span className="font-semibold text-slate-300">{Math.round(progress)}%</span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
             <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500" style={{ width: `${progress}%` }} />
