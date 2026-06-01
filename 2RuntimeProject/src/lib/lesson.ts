@@ -274,7 +274,7 @@ export async function completeLessonAndUpdateState(
   await bulkUpdate(studentId, knowledgeUpdates);
 
   // Award performance stars based on dynamic settings
-  const performanceStarsEarned = starsEarned;
+  const performanceStarsEarned = Math.floor(starsEarned);
 
   // On the first lesson of the day, also add the current streak count as a bonus
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Singapore" });

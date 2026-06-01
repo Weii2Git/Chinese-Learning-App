@@ -27,8 +27,8 @@ export async function getAppSettings(): Promise<AppSettings> {
   return {
     vocabQuestionsCount: parseInt(map.get("vocab_questions_count") || "20", 10),
     comprehensionQuestionsCount: parseInt(map.get("comprehension_questions_count") || "5", 10),
-    starsPerCorrectFast: parseInt(map.get("stars_per_correct_fast") || "1", 10),
-    starsPerCorrectSlow: parseInt(map.get("stars_per_correct_slow") || "1", 10),
+    starsPerCorrectFast: parseFloat(map.get("stars_per_correct_fast") || "1"),
+    starsPerCorrectSlow: parseFloat(map.get("stars_per_correct_slow") || "1"),
   };
 }
 
