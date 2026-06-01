@@ -34,6 +34,7 @@ interface Props {
   knownPercentage: number;
   currentLevel: string;
   levelKnownCount: number;
+  levelLearningCount: number;
   levelTotal: number;
 }
 
@@ -49,6 +50,7 @@ export function StudentDashboardClient({
   knownPercentage,
   currentLevel,
   levelKnownCount,
+  levelLearningCount,
   levelTotal,
 }: Props) {
   const [panel, setPanel] = useState<null | "stars" | "known" | "learning">(null);
@@ -165,14 +167,14 @@ export function StudentDashboardClient({
             onClick={() => openWords("known")}
             className={`rounded-xl p-3 text-center border transition-colors flex flex-col items-center justify-center min-h-[72px] ${panel === "known" ? "bg-emerald-500/20 border-emerald-500/40" : "bg-slate-800 border-slate-700 hover:border-emerald-500/40"}`}
           >
-            <p className="text-2xl font-bold text-emerald-400">{knownCount}</p>
+            <p className="text-2xl font-bold text-emerald-400">{levelKnownCount}</p>
             <p className="text-xs text-slate-400 mt-0.5">Known ↗</p>
           </button>
           <button
             onClick={() => openWords("learning")}
             className={`rounded-xl p-3 text-center border transition-colors flex flex-col items-center justify-center min-h-[72px] ${panel === "learning" ? "bg-amber-500/20 border-amber-500/40" : "bg-slate-800 border-slate-700 hover:border-amber-500/40"}`}
           >
-            <p className="text-2xl font-bold text-amber-400">{learningCount}</p>
+            <p className="text-2xl font-bold text-amber-400">{levelLearningCount}</p>
             <p className="text-xs text-slate-400 mt-0.5">Learning ↗</p>
           </button>
         </div>
