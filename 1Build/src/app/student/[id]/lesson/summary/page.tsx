@@ -11,6 +11,7 @@ interface LessonCompleteResponse {
   knowledgeUpdates: KnowledgeUpdate[];
   leveledUp: boolean;
   streakBonus: number;
+  performanceStarsEarned: number;
 }
 
 type PagePhase = "loading" | "done" | "error";
@@ -90,13 +91,13 @@ export default function TestSummaryPage() {
 
   if (!data || !lessonState) return null;
 
-  const { updatedStudent, knowledgeUpdates, leveledUp, streakBonus } = data;
+  const { updatedStudent, knowledgeUpdates, leveledUp, streakBonus, performanceStarsEarned } = data;
   // Only show stats from the last passing round
   const roundStart = lessonState.lastRoundStartIndex ?? 0;
   const lastRoundResults = lessonState.results.slice(roundStart);
   const totalQuestions = lastRoundResults.length;
   const correctCount = lastRoundResults.filter((r) => r.isCorrect).length;
-  const starsEarned = correctCount;
+  const starsEarned = performanceStarsEarned;
   const knownCount = knowledgeUpdates.filter((u) => u.newState === "known").length;
   const learningCount = knowledgeUpdates.filter((u) => u.newState === "learning").length;
   const dontKnowCount = knowledgeUpdates.filter((u) => u.newState === "don't know").length;

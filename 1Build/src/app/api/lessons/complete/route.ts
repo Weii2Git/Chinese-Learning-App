@@ -61,6 +61,7 @@ export async function POST(request: Request) {
       knowledgeUpdates: outcome.knowledgeUpdates,
       leveledUp: outcome.leveledUp,
       streakBonus: outcome.streakBonus,
+      performanceStarsEarned: outcome.performanceStarsEarned,
     });
   } catch (error) {
     const message =
