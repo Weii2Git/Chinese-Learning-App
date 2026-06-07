@@ -132,7 +132,20 @@ export default function TestPage() {
 
   const totalQuestions = questionsRef.current.length;
   const currentQuestion = questionsRef.current[currentIndex];
-  if (!currentQuestion) return null;
+  if (!currentQuestion) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+        <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-8 text-center">
+          <p className="text-3xl mb-4">⚠️</p>
+          <h2 className="text-lg font-bold text-white mb-2">No questions available</h2>
+          <p className="text-slate-400 text-sm mb-6">Could not generate test questions. Please try again.</p>
+          <button onClick={() => { questionsRef.current = []; buildFullTest(); }} className="rounded-xl bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 font-semibold text-white transition-colors">
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center px-8 py-12">
