@@ -28,7 +28,6 @@ export default async function Home() {
           />
           <div>
             <h1 className="text-5xl font-bold text-white tracking-tight">The Daily Dragon Quest</h1>
-            <p className="text-slate-400 text-lg mt-1 text-center">Select your profile to start learning</p>
           </div>
         </div>
       </header>
