@@ -221,7 +221,7 @@ export function generateCombinedQuestion(
     meaningDistractors = [...meaningDistractors, ...shuffle(extraMeanings).slice(0, 3 - meaningDistractors.length)];
   }
 
-  const meaningOptions = shuffle([correctMeaning, ...meaningDistractors]);
+  const meaningOptions = shuffle([correctMeaning, ...meaningDistractors].map((m) => m.toLowerCase()));
 
   // Track used correct meanings only (not distractors) to avoid the correct answer
   // appearing as a distractor in a later question
@@ -229,16 +229,18 @@ export function generateCombinedQuestion(
     usedMeanings.add(correctMeaning);
   }
 
+  const normalizedCorrectMeaning = correctMeaning.toLowerCase();
+
   return {
     type: "combined",
     wordId: word.id,
     character: displayCharacter,
-    correctAnswer: `${correctPinyin}|${correctMeaning}`,
+    correctAnswer: `${correctPinyin}|${normalizedCorrectMeaning}`,
     correctPinyin,
-    correctMeaning,
+    correctMeaning: normalizedCorrectMeaning,
     pinyinOptions,
     meaningOptions,
-    options: pinyinOptions, // for compatibility with Question type
+    options: pinyinOptions,
     isNewWord,
   };
 }
