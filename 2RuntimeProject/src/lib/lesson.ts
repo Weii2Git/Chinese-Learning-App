@@ -192,11 +192,13 @@ export async function completeLessonAndUpdateState(
   const knowledgeUpdates: KnowledgeUpdate[] = [];
   // Count stars based on settings
   let starsEarned = 0;
+  let correctCount = 0; // actual number of correct answers (for logging)
 
   for (const result of results) {
     // Count comprehension correct answers for stars
     if (result.question.kind === "comprehension") {
       if (result.isCorrect) {
+        correctCount++;
         starsEarned += result.elapsedMs <= QUICK_THRESHOLD_MS
           ? settings.starsPerCorrectFast
           : settings.starsPerCorrectSlow;
@@ -214,10 +216,12 @@ export async function completeLessonAndUpdateState(
     if (result.isCorrect && result.elapsedMs <= QUICK_THRESHOLD_MS) {
       // Quick correct → "known"
       newState = "known";
+      correctCount++;
       starsEarned += settings.starsPerCorrectFast;
     } else if (result.isCorrect && result.elapsedMs > QUICK_THRESHOLD_MS) {
       // Slow correct → "learning"
       newState = "learning";
+      correctCount++;
       starsEarned += settings.starsPerCorrectSlow;
     } else {
       // Wrong (including timer expired) → "don't know"
@@ -295,8 +299,8 @@ export async function completeLessonAndUpdateState(
 
   // Log the star award (non-blocking — don't await, fire and forget)
   const logReason = streakBonus > 0
-    ? `Lesson completed: ${performanceStarsEarned} correct answers + ${streakBonus} streak bonus`
-    : `Lesson completed: ${performanceStarsEarned} correct answers`;
+    ? `${correctCount} correct answers + ${streakBonus} streak bonus`
+    : `${correctCount} correct answers`;
   appendStarLog({
     id: crypto.randomUUID(),
     timestamp: new Date().toISOString(),
