@@ -269,15 +269,16 @@ export function buildTest(
   const allWords = [...newWords, ...reviewWords];
   const targetWordCount = vocabTarget ?? 20;
   const compCount = comprehensionTarget ?? 5;
+  // Select more words than needed to account for deduplication losses
+  const selectionCap = targetWordCount + 5;
 
   const wordsToTest: { word: Word; isNew: boolean }[] = [];
   const addedIds = new Set<string>();
 
   // First: add looked-up words (these are words the user clicked during reading)
-  // Create Word objects on the fly for words not in the pre-selected pool
   if (lookedUpWords && lookedUpWords.length > 0) {
     for (const lookupText of lookedUpWords) {
-      if (wordsToTest.length >= targetWordCount) break;
+      if (wordsToTest.length >= selectionCap) break;
       // Try to find the word in allWords first
       const matchedWord = allWords.find((w) => w.character === lookupText || lookupText.includes(w.character));
       if (matchedWord && !addedIds.has(matchedWord.id)) {
@@ -308,7 +309,7 @@ export function buildTest(
 
   // Second: add new words
   for (const word of newWords) {
-    if (wordsToTest.length >= targetWordCount) break;
+    if (wordsToTest.length >= selectionCap) break;
     if (!addedIds.has(word.id)) {
       addedIds.add(word.id);
       wordsToTest.push({ word, isNew: true });
@@ -317,7 +318,7 @@ export function buildTest(
 
   // Third: fill with review words
   for (const word of reviewWords) {
-    if (wordsToTest.length >= targetWordCount) break;
+    if (wordsToTest.length >= selectionCap) break;
     if (!addedIds.has(word.id)) {
       addedIds.add(word.id);
       wordsToTest.push({ word, isNew: false });
@@ -401,5 +402,8 @@ export function buildTest(
       data: q,
     }));
 
-  return [...comprehensionWrapped, ...vocabQuestions];
+  // Cap vocab questions at target count (we selected extra to handle dedup losses)
+  const finalVocab = vocabQuestions.slice(0, targetWordCount);
+
+  return [...comprehensionWrapped, ...finalVocab];
 }
