@@ -72,15 +72,16 @@ export async function selectWordsForLesson(
   const currentLevelWords = relevantWords.filter((w) => w.level === level);
   const earlierLevelWords = relevantWords.filter((w) => w.level !== level);
 
-  // New words: "learning" or "don't know" — prioritize current level first
+  // New words: only "don't know" (never introduced) — prioritize current level first
+  // "learning" words go to the review pool instead
   const newWordCandidatesCurrentLevel = currentLevelWords.filter((w) => {
     const state = getState(w.id);
-    return state === "learning" || state === "don't know";
+    return state === "don't know";
   });
 
   const newWordCandidatesEarlierLevels = earlierLevelWords.filter((w) => {
     const state = getState(w.id);
-    return state === "learning" || state === "don't know";
+    return state === "don't know";
   });
 
   const allNewWordCandidates: Word[] = [
