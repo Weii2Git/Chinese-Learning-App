@@ -9,7 +9,7 @@ import { readKnowledgeRecords, bulkUpdate } from "./knowledge";
 import { getStudent, updateStudent, checkAndAdvanceLevel } from "./student";
 import { updateStreakStars } from "./stars";
 import { getWordsForLevel, getAllWords } from "./word-list";
-import { prioritizeReviewWords, advanceInterval, resetInterval } from "./srs";
+import { prioritizeReviewWords, countOverdue, advanceInterval, resetInterval } from "./srs";
 import { appendStarLog } from "@/app/api/admin/adjust-stars/route";
 import { getAppSettings } from "@/app/api/admin/settings/route";
 import type {
@@ -91,10 +91,16 @@ export async function selectWordsForLesson(
 
   let newWords: Word[] = allNewWordCandidates.slice(0, NEW_WORDS_PER_LESSON);
 
-  // Review words: use SRS prioritization for "known" state words
-  const knownRecords = studentRecords.filter((r) => r.state === "known");
+  // Review words: use SRS prioritization for "known" and "learning" state words
+  const reviewableRecords = studentRecords.filter((r) => r.state === "known" || r.state === "learning");
   const now = new Date().toISOString();
-  const prioritizedRecords = prioritizeReviewWords(knownRecords, now, REVIEW_WORDS_PER_LESSON + REVIEW_WORDS_BUFFER);
+  
+  // Check for backlog — if overdue words exist, allow up to 10 extra review slots (max 30 total)
+  const overdueCount = countOverdue(reviewableRecords, now);
+  const extraSlots = Math.min(overdueCount > REVIEW_WORDS_PER_LESSON ? 10 : 0, overdueCount - REVIEW_WORDS_PER_LESSON);
+  const reviewLimit = REVIEW_WORDS_PER_LESSON + REVIEW_WORDS_BUFFER + Math.max(0, extraSlots);
+  
+  const prioritizedRecords = prioritizeReviewWords(reviewableRecords, now, reviewLimit);
 
   // Map prioritized records back to Word objects
   const wordMap = new Map<string, Word>();
@@ -128,8 +134,8 @@ export async function selectWordsForLesson(
     })
     .filter((w): w is Word => w !== undefined);
 
-  // If fewer than 20 review words, fill remaining slots from current level
-  if (reviewWords.length < REVIEW_WORDS_PER_LESSON + REVIEW_WORDS_BUFFER) {
+  // If fewer than needed review words, fill remaining slots from current level
+  if (reviewWords.length < reviewLimit) {
     const selectedIds = new Set([
       ...newWords.map((w) => w.id),
       ...reviewWords.map((w) => w.id),
@@ -139,13 +145,13 @@ export async function selectWordsForLesson(
       (w) => !selectedIds.has(w.id)
     );
 
-    const slotsToFill = (REVIEW_WORDS_PER_LESSON + REVIEW_WORDS_BUFFER) - reviewWords.length;
+    const slotsToFill = reviewLimit - reviewWords.length;
     const fillWords = fillCandidates.slice(0, slotsToFill);
     reviewWords = [...reviewWords, ...fillWords];
   }
 
-  // If total (new + review) is still less than 25, increase new words to fill the gap
-  const totalTarget = NEW_WORDS_PER_LESSON + REVIEW_WORDS_PER_LESSON + REVIEW_WORDS_BUFFER; // 25
+  // If total (new + review) is still less than target, increase new words to fill the gap
+  const totalTarget = NEW_WORDS_PER_LESSON + reviewLimit;
   const totalSelected = newWords.length + reviewWords.length;
   if (totalSelected < totalTarget && allNewWordCandidates.length > newWords.length) {
     const extraNeeded = totalTarget - totalSelected;

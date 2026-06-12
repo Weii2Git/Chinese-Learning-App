@@ -100,9 +100,9 @@ export function resetInterval(
 
 /**
  * Select and sort review word candidates from knowledge records.
- * Filters to only "known" records, sorts by priority:
- * - Overdue first (most overdue first, i.e. due date ascending)
- * - Then nearest upcoming due dates (due date ascending)
+ * Filters to "known" and "learning" records, sorts by priority:
+ * - Overdue first (most overdue first, i.e. largest overdue duration)
+ * - Then nearest upcoming due dates
  * Returns up to `limit` records.
  */
 export function prioritizeReviewWords(
@@ -110,18 +110,22 @@ export function prioritizeReviewWords(
   now: string,
   limit: number
 ): KnowledgeRecord[] {
-  // Filter to only "known" records
-  const knownRecords = records.filter((r) => r.state === "known");
+  // Filter to "known" and "learning" records (learning words need review too)
+  const reviewable = records.filter((r) => r.state === "known" || r.state === "learning");
 
-  // Sort by overdue amount descending (most overdue first = largest getOverdueMs first)
-  // For records with same overdue status, sort by due date ascending
-  const sorted = [...knownRecords].sort((a, b) => {
+  // Sort by overdue amount descending (most overdue first)
+  const sorted = [...reviewable].sort((a, b) => {
     const overdueA = getOverdueMs(a, now);
     const overdueB = getOverdueMs(b, now);
-    // Both overdue (positive) or both not due (negative): sort by overdue descending
-    // This means most overdue first, then nearest upcoming first
     return overdueB - overdueA;
   });
 
   return sorted.slice(0, limit);
+}
+
+/**
+ * Count how many records are currently overdue.
+ */
+export function countOverdue(records: KnowledgeRecord[], now: string): number {
+  return records.filter((r) => (r.state === "known" || r.state === "learning") && isDue(r, now)).length;
 }
