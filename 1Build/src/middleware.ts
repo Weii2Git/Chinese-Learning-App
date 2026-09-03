@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const PUBLIC_PATHS = ["/login", "/api/auth/login"];
 
 // Admin login page + the auth endpoint must stay reachable without an admin session.
-const ADMIN_PUBLIC_PATHS = ["/api/admin/auth"];
+const ADMIN_PUBLIC_PATHS = ["/admin/login", "/api/admin/auth"];
 
 function isLocalhost(req: NextRequest): boolean {
   const host = req.headers.get("host") || "";
@@ -34,12 +34,14 @@ export function middleware(req: NextRequest) {
       loginUrl.pathname = "/admin/login";
       return NextResponse.redirect(loginUrl);
     }
+    // A valid admin session is sufficient for admin routes — don't also require
+    // the site passcode (otherwise admins get bounced to /login).
+    return NextResponse.next();
   }
 
   // ── Site passcode protection ──
   if (
     PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
-    pathname === "/admin/login" ||
     isAdminPublic ||
     isStatic
   ) {
