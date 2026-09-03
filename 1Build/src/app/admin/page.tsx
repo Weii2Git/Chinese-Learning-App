@@ -195,16 +195,33 @@ export default function AdminPage() {
     finally { setTesting(false); }
   }
 
+  async function handleLogout() {
+    try {
+      await fetch("/api/admin/auth", { method: "DELETE" });
+    } catch {
+      /* ignore */
+    }
+    window.location.href = "/";
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center px-4 py-10">
       <div className="w-full max-w-lg space-y-4">
 
-        <Link href="/" className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-sm transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-          Back to Home
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-sm transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            Back to Home
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-1.5 text-slate-500 hover:text-red-400 text-sm transition-colors"
+          >
+            🔒 Lock Admin
+          </button>
+        </div>
 
         {/* ── 1. PERFORMANCE STARS ── */}
         <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
