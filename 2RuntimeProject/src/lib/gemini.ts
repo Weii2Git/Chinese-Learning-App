@@ -147,7 +147,11 @@ function buildComprehensionPrompt(params: ComprehensionParams): string {
     ? `\n以下问题已经问过，请不要重复：\n${params.previousQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n`
     : "";
 
-  return `你是一位中文阅读理解出题专家。请根据以下故事生成${COMPREHENSION_QUESTIONS_COUNT + 2}道阅读理解选择题。
+  // Ask for a couple extra to absorb any that fail validation.
+  const wanted = params.count ?? COMPREHENSION_QUESTIONS_COUNT;
+  const askFor = wanted + 2;
+
+  return `你是一位中文阅读理解出题专家。请根据以下故事生成${askFor}道阅读理解选择题。
 
 故事内容：
 ${params.story}
@@ -175,7 +179,10 @@ ${previousQuestionsSection}
 /**
  * Parse the comprehension questions response from Gemini.
  */
-function parseComprehensionResponse(text: string): ComprehensionQuestion[] {
+function parseComprehensionResponse(
+  text: string,
+  limit: number
+): ComprehensionQuestion[] {
   // Extract JSON from the response (handle markdown code blocks)
   let jsonStr = text.trim();
   const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -189,16 +196,12 @@ function parseComprehensionResponse(text: string): ComprehensionQuestion[] {
     throw new Error("Response is not an array");
   }
 
-  if (parsed.length < COMPREHENSION_QUESTIONS_COUNT) {
-    throw new Error(
-      `Expected at least ${COMPREHENSION_QUESTIONS_COUNT} questions, got ${parsed.length}`
-    );
-  }
-
-  // Take the first N valid questions (we ask for N+1 to have a buffer)
+  // Collect up to `limit` valid questions. Unlike before, we do NOT throw when
+  // the model returns fewer than requested — the caller tops up the shortfall
+  // with a follow-up request. Returning [] here just triggers a retry/top-up.
   const questions: ComprehensionQuestion[] = [];
   for (const item of parsed) {
-    if (questions.length >= COMPREHENSION_QUESTIONS_COUNT) break;
+    if (questions.length >= limit) break;
     const q = item as Record<string, unknown>;
     if (
       typeof q.question !== "string" ||
@@ -214,12 +217,6 @@ function parseComprehensionResponse(text: string): ComprehensionQuestion[] {
       correctAnswer: q.correctAnswer,
       options: q.options as string[],
     });
-  }
-
-  if (questions.length < COMPREHENSION_QUESTIONS_COUNT) {
-    throw new Error(
-      `Only ${questions.length} valid questions out of ${parsed.length} returned`
-    );
   }
 
   return questions;
@@ -368,9 +365,15 @@ export async function generateComprehensionQuestions(
   params: ComprehensionParams
 ): Promise<ComprehensionQuestion[]> {
   const client = getClient();
-  const prompt = buildComprehensionPrompt(params);
+  const target = params.count ?? COMPREHENSION_QUESTIONS_COUNT;
 
-  async function attemptGeneration(): Promise<ComprehensionQuestion[]> {
+  // Generate for a specific request (prompt reflects params.count and any
+  // previousQuestions to avoid), returning up to `limit` valid questions.
+  async function attemptGeneration(
+    reqParams: ComprehensionParams,
+    limit: number
+  ): Promise<ComprehensionQuestion[]> {
+    const prompt = buildComprehensionPrompt(reqParams);
     try {
       const response = await client.models.generateContent({
         model: MODEL,
@@ -383,7 +386,7 @@ export async function generateComprehensionQuestions(
         throw new Error("Gemini API returned an empty response");
       }
 
-      return parseComprehensionResponse(text);
+      return parseComprehensionResponse(text, limit);
     } catch (error: unknown) {
       if (isRateLimitError(error)) {
         // Exponential backoff: wait 2 seconds then retry
@@ -397,7 +400,7 @@ export async function generateComprehensionQuestions(
         if (!retryText) {
           throw new Error("Gemini API returned an empty response after rate limit retry");
         }
-        return parseComprehensionResponse(retryText);
+        return parseComprehensionResponse(retryText, limit);
       }
 
       if (isTimeoutError(error)) {
@@ -410,26 +413,59 @@ export async function generateComprehensionQuestions(
     }
   }
 
-  // First attempt
-  try {
-    return await attemptGeneration();
-  } catch (error: unknown) {
-    // If it's a parse/validation error (malformed response), retry once
-    if (
-      error instanceof Error &&
-      !isTimeoutError(error) &&
-      !error.message.includes("GEMINI_API_KEY") &&
-      !error.message.includes("rate limit")
-    ) {
-      try {
-        return await attemptGeneration();
-      } catch (retryError: unknown) {
-        throw new Error(
-          `Failed to generate valid comprehension questions after retry. ` +
-          `${retryError instanceof Error ? retryError.message : "Unknown error"}`
-        );
+  // Run one generation pass with a single parse/validation retry.
+  async function generateBatch(
+    reqParams: ComprehensionParams,
+    limit: number
+  ): Promise<ComprehensionQuestion[]> {
+    try {
+      return await attemptGeneration(reqParams, limit);
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        !isTimeoutError(error) &&
+        !error.message.includes("GEMINI_API_KEY") &&
+        !error.message.includes("rate limit")
+      ) {
+        return await attemptGeneration(reqParams, limit);
       }
+      throw error;
     }
-    throw error;
   }
+
+  // Collect questions, topping up if the model returns fewer than `target`.
+  // Each top-up excludes questions we already have so they aren't repeated.
+  const collected: ComprehensionQuestion[] = [];
+  const askedTexts: string[] = [...(params.previousQuestions ?? [])];
+  const MAX_ROUNDS = 3;
+
+  for (let round = 0; round < MAX_ROUNDS && collected.length < target; round++) {
+    const remaining = target - collected.length;
+    const batch = await generateBatch(
+      {
+        story: params.story,
+        level: params.level,
+        previousQuestions: askedTexts,
+        count: remaining,
+      },
+      remaining
+    );
+
+    for (const q of batch) {
+      // Guard against the model ignoring the "don't repeat" instruction.
+      if (collected.some((c) => c.question === q.question)) continue;
+      collected.push(q);
+      askedTexts.push(q.question);
+      if (collected.length >= target) break;
+    }
+
+    // No progress this round — stop trying rather than loop pointlessly.
+    if (batch.length === 0) break;
+  }
+
+  if (collected.length === 0) {
+    throw new Error("Failed to generate any valid comprehension questions.");
+  }
+
+  return collected;
 }

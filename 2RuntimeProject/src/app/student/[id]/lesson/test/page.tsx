@@ -46,19 +46,23 @@ export default function TestPage() {
     try {
       const level = newWords[0]?.level || reviewWords[0]?.level || "1-a";
 
-      // Fetch saved compound context, comprehension questions, and settings in parallel
-      const [compRes, compQRes, settingsRes] = await Promise.all([
+      // Load settings first so we can request the configured number of
+      // comprehension questions. Uses the public read-only endpoint (the admin
+      // route is gated and would 401 for students).
+      const settingsRes = await fetch("/api/settings");
+      const settings = settingsRes.ok ? await settingsRes.json() : { vocabQuestionsCount: 20, comprehensionQuestionsCount: 5 };
+
+      // Fetch saved compound context and comprehension questions in parallel.
+      const [compRes, compQRes] = await Promise.all([
         fetch(`/api/students/${studentId}/compounds`),
         fetch("/api/generate-comprehension", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ story, level }),
+          body: JSON.stringify({ story, level, count: settings.comprehensionQuestionsCount }),
         }),
-        fetch("/api/admin/settings"),
       ]);
 
       const knowledgeRecords = compRes.ok ? await compRes.json() : [];
-      const settings = settingsRes.ok ? await settingsRes.json() : { vocabQuestionsCount: 20, comprehensionQuestionsCount: 5 };
 
       if (!compQRes.ok) {
         const data = await compQRes.json();
@@ -154,7 +158,7 @@ export default function TestPage() {
         <div className="mb-10">
           <div className="flex items-center justify-between mb-5">
             <h1 className="text-3xl font-bold text-white">Test Time</h1>
-            <span className="text-base text-slate-500">{currentIndex + 1} / {totalQuestions}</span>
+            <span className="text-base text-slate-500">{currentIndex + 1} / {totalQuestions} · 80% to pass</span>
           </div>
           {/* Progress bar — green=correct, red=incorrect, indigo=current, slate=unanswered */}
           <div className="flex gap-1.5">

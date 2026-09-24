@@ -4,14 +4,14 @@ import type { ComprehensionParams } from "@/lib/types";
 /**
  * POST /api/generate-comprehension
  * Generates comprehension questions via Gemini API.
- * Request body: { story: string, level: string, previousQuestions?: string[] }
+ * Request body: { story: string, level: string, previousQuestions?: string[], count?: number }
  * Returns: { questions: ComprehensionQuestion[] }
  */
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as ComprehensionParams;
 
-    const { story, level, previousQuestions } = body;
+    const { story, level, previousQuestions, count } = body;
 
     if (!story || !level) {
       return Response.json(
@@ -24,6 +24,7 @@ export async function POST(request: Request) {
       story,
       level,
       previousQuestions,
+      count,
     });
 
     return Response.json({ questions });

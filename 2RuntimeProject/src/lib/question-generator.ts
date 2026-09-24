@@ -247,13 +247,16 @@ export function generateCombinedQuestion(
 
 /**
  * Build a complete test:
- * - Tests 20 words/characters from the article
+ * - Tests up to `vocabTarget` words/characters from the article (default 20)
  * - Priority: looked-up words > new words > review words
  * - Each word gets 1 question testing both pinyin AND meaning (two separate selections)
  * - No repeated questions (each word tested once)
- * - 3 comprehension questions at the end
+ * - Up to `comprehensionTarget` comprehension questions at the end (default 5)
  *
- * Total: 20 vocab questions + 3 comprehension = 23 questions
+ * Candidates are drawn from the full word list and questions are generated
+ * until the vocab target is reached, so dedup/missing-data skips are backfilled
+ * whenever enough words exist. The comprehension array should already contain
+ * the desired count (the caller requests that many from the API).
  */
 export function buildTest(
   newWords: Word[],
@@ -269,8 +272,12 @@ export function buildTest(
   const allWords = [...newWords, ...reviewWords];
   const targetWordCount = vocabTarget ?? 20;
   const compCount = comprehensionTarget ?? 5;
-  // Select more words than needed to account for deduplication losses
-  const selectionCap = targetWordCount + 5;
+  // Consider ALL available words as candidates (not just target+N). Some
+  // candidates get dropped later (duplicate display char, missing pinyin/
+  // meaning), so keeping the full pool lets us backfill up to the target
+  // instead of silently ending up short. We still cap generated questions at
+  // targetWordCount below.
+  const selectionCap = Math.max(targetWordCount, allWords.length + (lookedUpWords?.length ?? 0));
 
   const wordsToTest: { word: Word; isNew: boolean }[] = [];
   const addedIds = new Set<string>();
@@ -341,6 +348,9 @@ export function buildTest(
   }
 
   for (const { word, isNew } of wordsToTest) {
+    // Stop once we've generated enough valid vocab questions.
+    if (vocabQuestions.length >= targetWordCount) break;
+
     const displayChar = segmentedStory
       ? findWordInStory(word.character, segmentedStory)
       : word.character;

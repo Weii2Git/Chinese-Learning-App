@@ -49,10 +49,20 @@ export default function RereadPage() {
     setError(null);
     try {
       const level = lessonState.newWords[0]?.level || lessonState.reviewWords[0]?.level || "1-a";
+
+      // Load the same test-size settings the initial test uses, so a retest has
+      // the same number of questions (and the 80% gate is consistent). Uses the
+      // public read-only endpoint (the admin route is gated).
+      const settings = await fetch("/api/settings")
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+      const vocabCount = settings?.vocabQuestionsCount ?? 20;
+      const compCount = settings?.comprehensionQuestionsCount ?? 5;
+
       const res = await fetch("/api/generate-comprehension", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ story: lessonState.story, level, previousQuestions: getPreviousQuestions() }),
+        body: JSON.stringify({ story: lessonState.story, level, previousQuestions: getPreviousQuestions(), count: compCount }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -64,7 +74,7 @@ export default function RereadPage() {
       const otherWords = allWords.filter((w) => !incorrectIds.has(w.id));
       const reorderedNew = [...incorrectVocabWords, ...otherWords.filter((w) => lessonState.newWords.some((nw) => nw.id === w.id))];
       const reorderedReview = otherWords.filter((w) => lessonState.reviewWords.some((rw) => rw.id === w.id));
-      const allRetestQuestions = buildTest(reorderedNew, reorderedReview, comprehensionQs, lessonState.segmentedStory, lessonState.wordMeanings);
+      const allRetestQuestions = buildTest(reorderedNew, reorderedReview, comprehensionQs, lessonState.segmentedStory, lessonState.wordMeanings, undefined, undefined, vocabCount, compCount);
       setRetestQuestions(allRetestQuestions);
       setCurrentIndex(0);
       setLoopAnswers([]);

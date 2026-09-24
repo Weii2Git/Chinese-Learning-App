@@ -140,6 +140,8 @@ export interface ComprehensionParams {
   story: string;
   level: string;
   previousQuestions?: string[];
+  /** How many valid questions to return. Defaults to COMPREHENSION_QUESTIONS_COUNT. */
+  count?: number;
 }
 
 export interface ParsedLevel {
