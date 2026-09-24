@@ -308,7 +308,7 @@ export default function AdminPage() {
               <div>
                 <p className="text-sm font-semibold text-white mb-3">
                   {selectedStudentInfo?.name}&apos;s Star History
-                  <span className="text-slate-500 font-normal text-xs ml-2">(last 20)</span>
+                  <span className="text-slate-500 font-normal text-xs ml-2">(last 25)</span>
                 </p>
                 {loadingLog && <p className="text-slate-500 text-xs text-center py-3">Loading...</p>}
                 {!loadingLog && starLog.length === 0 && <p className="text-slate-600 text-xs text-center py-3">No history yet</p>}

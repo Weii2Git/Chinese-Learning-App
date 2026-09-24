@@ -5,7 +5,7 @@ import { promises as fs } from "fs";
 import path from "path";
 
 const LOG_FILE = path.resolve(process.cwd(), "data/star-adjustments.json");
-export const MAX_LOG_PER_STUDENT = 20;
+export const MAX_LOG_PER_STUDENT = 25;
 
 export interface StarAdjustmentEntry {
   id: string;
@@ -71,7 +71,7 @@ export async function appendStarLog(entry: StarAdjustmentEntry): Promise<void> {
       reason: entry.reason,
       source: entry.source,
     });
-    // Prune: keep only the latest 20 per student
+    // Prune: keep only the latest MAX_LOG_PER_STUDENT per student
     const supabase2 = getSupabaseClient();
     const { data: rows } = await supabase2
       .from("star_adjustment_log")
@@ -88,7 +88,7 @@ export async function appendStarLog(entry: StarAdjustmentEntry): Promise<void> {
   try {
     const content = await fs.readFile(LOG_FILE, "utf-8");
     const all: StarAdjustmentEntry[] = JSON.parse(content);
-    // Keep latest 20 per student, plus all other students' entries
+    // Keep latest MAX_LOG_PER_STUDENT per student, plus all other students' entries
     const others = all.filter((e) => e.studentId !== entry.studentId);
     const thisStudent = all.filter((e) => e.studentId === entry.studentId);
     const updated = [entry, ...thisStudent].slice(0, MAX_LOG_PER_STUDENT);
