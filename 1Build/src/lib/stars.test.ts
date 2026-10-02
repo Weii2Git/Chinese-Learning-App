@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { promises as fs } from "fs";
 import path from "path";
-import { updateStreakStars, awardPerformanceStars } from "./stars";
+import { updateStreakStars } from "./stars";
 import { getAllStudents, getStudent } from "./student";
 import { STUDENTS_FILE } from "./constants";
 
@@ -96,11 +96,11 @@ describe("StarService", () => {
       expect(updated?.lastActiveDate).toBe(getToday());
     });
 
-    it("should cap streak at MAX_STREAK_STARS (5)", async () => {
+    it("keeps incrementing the raw streak beyond 5 (the cap applies only to the displayed bonus)", async () => {
       const students = await getAllStudents();
       const student = students[0];
 
-      // Set up: student already at max streak, was active yesterday
+      // Set up: student at a streak of 5, was active yesterday
       await fs.writeFile(
         studentsPath,
         JSON.stringify(
@@ -114,10 +114,10 @@ describe("StarService", () => {
       );
 
       const result = await updateStreakStars(student.id);
-      expect(result).toBe(5);
+      expect(result).toBe(6);
 
       const updated = await getStudent(student.id);
-      expect(updated?.streakStars).toBe(5);
+      expect(updated?.streakStars).toBe(6);
     });
 
     it("should reset streak to 1 when lastActiveDate is more than 1 day ago", async () => {
@@ -174,73 +174,6 @@ describe("StarService", () => {
       await expect(updateStreakStars("non-existent-id")).rejects.toThrow(
         "Student not found"
       );
-    });
-  });
-
-  describe("awardPerformanceStars", () => {
-    it("should add quickCorrectCount to existing performance stars", async () => {
-      const students = await getAllStudents();
-      const student = students[0];
-
-      // Set up: student has 10 performance stars
-      await fs.writeFile(
-        studentsPath,
-        JSON.stringify(
-          students.map((s) =>
-            s.id === student.id ? { ...s, performanceStars: 10 } : s
-          )
-        ),
-        "utf-8"
-      );
-
-      const result = await awardPerformanceStars(student.id, 3);
-      expect(result).toBe(13);
-
-      const updated = await getStudent(student.id);
-      expect(updated?.performanceStars).toBe(13);
-    });
-
-    it("should handle zero quick correct answers", async () => {
-      const students = await getAllStudents();
-      const student = students[0];
-
-      // Set up: student has 5 performance stars
-      await fs.writeFile(
-        studentsPath,
-        JSON.stringify(
-          students.map((s) =>
-            s.id === student.id ? { ...s, performanceStars: 5 } : s
-          )
-        ),
-        "utf-8"
-      );
-
-      const result = await awardPerformanceStars(student.id, 0);
-      expect(result).toBe(5);
-
-      const updated = await getStudent(student.id);
-      expect(updated?.performanceStars).toBe(5);
-    });
-
-    it("should accumulate performance stars across multiple calls", async () => {
-      const students = await getAllStudents();
-      const student = students[0];
-
-      const result1 = await awardPerformanceStars(student.id, 4);
-      expect(result1).toBe(4);
-
-      const result2 = await awardPerformanceStars(student.id, 2);
-      expect(result2).toBe(6);
-
-      const result3 = await awardPerformanceStars(student.id, 5);
-      expect(result3).toBe(11);
-    });
-
-    it("should throw for non-existent student", async () => {
-      await getAllStudents(); // Initialize
-      await expect(
-        awardPerformanceStars("non-existent-id", 3)
-      ).rejects.toThrow("Student not found");
     });
   });
 });

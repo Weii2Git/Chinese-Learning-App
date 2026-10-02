@@ -171,10 +171,10 @@ describe("buildTest", () => {
     expect(wordIds).toEqual(expectedOrder);
   });
 
-  it("last 3 questions are comprehension questions", () => {
+  it("comprehension questions come first", () => {
     const questions = buildTest(newWords, reviewWords, comprehensionQuestions);
-    const last3 = questions.slice(-3);
-    for (const q of last3) {
+    const first3 = questions.slice(0, 3);
+    for (const q of first3) {
       expect(q.kind).toBe("comprehension");
     }
   });

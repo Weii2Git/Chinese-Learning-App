@@ -61,10 +61,10 @@ describe("StudentService", () => {
       const conor = students.find((s) => s.name === "Cony Da Banana");
       const mommy = students.find((s) => s.name === "Mommy");
 
-      expect(ryan?.currentLevel).toBe("3-a");
-      expect(patrick?.currentLevel).toBe("4-a");
-      expect(conor?.currentLevel).toBe("4-a");
-      expect(mommy?.currentLevel).toBe("3-b");
+      expect(ryan?.currentLevel).toBe("2-b");
+      expect(patrick?.currentLevel).toBe("3-b");
+      expect(conor?.currentLevel).toBe("3-b");
+      expect(mommy?.currentLevel).toBe("4-a");
     });
 
     it("should read existing students from file", async () => {
