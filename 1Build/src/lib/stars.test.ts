@@ -96,7 +96,7 @@ describe("StarService", () => {
       expect(updated?.lastActiveDate).toBe(getToday());
     });
 
-    it("keeps incrementing the raw streak beyond 5 (the cap applies only to the displayed bonus)", async () => {
+    it("keeps incrementing the raw streak (the cap applies only to the awarded/displayed bonus)", async () => {
       const students = await getAllStudents();
       const student = students[0];
 

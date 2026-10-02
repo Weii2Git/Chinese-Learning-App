@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Student } from "@/lib/types";
+import { MAX_STREAK_BONUS } from "@/lib/constants";
 
 const PLAYER_COLORS: Record<string, { accent: string; ring: string }> = {
   "Patrick":        { accent: "from-green-500 to-green-700",   ring: "ring-green-500" },
@@ -79,10 +80,10 @@ export function StudentCard({ student }: { student: Student }) {
 
           {/* Stats row: heart / star / lessons — evenly spaced */}
           <div className="flex items-center justify-around">
-            {/* Heart (Bonus - capped at 5) */}
+            {/* Heart (Bonus - capped at MAX_STREAK_BONUS) */}
             <div className="flex flex-col items-center gap-1">
               <span className="text-xl">❤️</span>
-              <span className="text-sm font-semibold text-slate-300">{Math.min(student.streakStars, 5)}</span>
+              <span className="text-sm font-semibold text-slate-300">{Math.min(student.streakStars, MAX_STREAK_BONUS)}</span>
             </div>
             {/* Star */}
             <div className="flex flex-col items-center gap-1">

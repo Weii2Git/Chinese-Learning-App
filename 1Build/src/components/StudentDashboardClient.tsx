@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { StreakCalendar } from "./StreakCalendar";
+import { MAX_STREAK_BONUS } from "@/lib/constants";
 
 interface WordInfo {
   character: string;
@@ -122,7 +123,7 @@ export function StudentDashboardClient({
         <div className="rounded-xl bg-slate-900 border border-slate-800 p-4 text-center">
           <div className="flex items-center justify-center gap-1.5">
             <span className="text-2xl">❤️</span>
-            <span className="text-2xl font-bold text-red-400">{Math.min(streakStars, 5)}</span>
+            <span className="text-2xl font-bold text-red-400">{Math.min(streakStars, MAX_STREAK_BONUS)}</span>
           </div>
           <p className="text-sm text-slate-500 mt-1">Bonus</p>
         </div>

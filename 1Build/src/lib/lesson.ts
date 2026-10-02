@@ -3,6 +3,7 @@ import {
   NEW_WORDS_PER_LESSON,
   REVIEW_WORDS_PER_LESSON,
   REVIEW_WORDS_BUFFER,
+  MAX_STREAK_BONUS,
 } from "./constants";
 import { readKnowledgeRecords, bulkUpdate } from "./knowledge";
 import { getStudent, updateStudent, checkAndAdvanceLevel } from "./student";
@@ -277,7 +278,7 @@ export async function completeLessonAndUpdateState(
   // On the first lesson of the day, also add the current streak count as a bonus
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Singapore" });
   const isFirstLessonToday = student.lastActiveDate !== today;
-  const streakBonus = isFirstLessonToday ? Math.min(student.streakStars, 5) : 0;
+  const streakBonus = isFirstLessonToday ? Math.min(student.streakStars, MAX_STREAK_BONUS) : 0;
   const totalStarsToAdd = performanceStarsEarned + streakBonus;
 
   // Run all independent updates in parallel
