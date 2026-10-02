@@ -28,13 +28,9 @@ interface Props {
   streakStars: number;
   streakFreezes: number;
   performanceStars: number;
-  knownCount: number;
-  learningCount: number;
-  dontKnowCount: number;
   knownPercentage: number;
   currentLevel: string;
   levelKnownCount: number;
-  levelLearningCount: number;
   levelTotal: number;
 }
 
@@ -44,16 +40,12 @@ export function StudentDashboardClient({
   streakStars,
   streakFreezes,
   performanceStars,
-  knownCount,
-  learningCount,
-  dontKnowCount,
   knownPercentage,
   currentLevel,
   levelKnownCount,
-  levelLearningCount,
   levelTotal,
 }: Props) {
-  const [panel, setPanel] = useState<null | "stars" | "known" | "learning">(null);
+  const [panel, setPanel] = useState<null | "stars" | "known">(null);
   const [showCalendar, setShowCalendar] = useState(false);
 
   const [starLog, setStarLog] = useState<StarEntry[] | null>(null);
@@ -66,7 +58,6 @@ export function StudentDashboardClient({
 
   const [words, setWords] = useState<WordInfo[] | null>(null);
   const [loadingWords, setLoadingWords] = useState(false);
-  const [wordState, setWordState] = useState<"known" | "learning">("known");
 
   async function openStars() {
     if (panel === "stars") { setPanel(null); return; }
@@ -79,13 +70,12 @@ export function StudentDashboardClient({
     }
   }
 
-  async function openWords(state: "known" | "learning") {
-    if (panel === state) { setPanel(null); return; }
-    setPanel(state);
-    setWordState(state);
+  async function openWords() {
+    if (panel === "known") { setPanel(null); return; }
+    setPanel("known");
     setWords(null);
     setLoadingWords(true);
-    const res = await fetch(`/api/students/${studentId}/words?state=${state}`);
+    const res = await fetch(`/api/students/${studentId}/words?state=known`);
     setWords(await res.json());
     setLoadingWords(false);
   }
@@ -113,10 +103,6 @@ export function StudentDashboardClient({
     } finally { setDeducting(false); }
   }
 
-  const total = knownCount + learningCount + dontKnowCount;
-  const knownPct = total > 0 ? (knownCount / total) * 100 : 0;
-  const learningPct = total > 0 ? (learningCount / total) * 100 : 0;
-  const dontKnowPct = total > 0 ? (dontKnowCount / total) * 100 : 0;
   const progress = Math.min(100, Math.max(0, knownPercentage));
 
   return (
@@ -157,25 +143,18 @@ export function StudentDashboardClient({
       {/* Word Knowledge + Lessons row */}
       <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wide text-center mb-4">Progress</p>
-        {/* Lessons / Known / Learning boxes — equal height */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        {/* Lessons / Known boxes — equal height */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="rounded-xl bg-slate-800 border border-slate-700 p-3 text-center flex flex-col items-center justify-center min-h-[72px]">
             <p className="text-2xl font-bold text-white">{lessonsCompleted}</p>
             <p className="text-xs text-slate-400 mt-0.5">Lessons</p>
           </div>
           <button
-            onClick={() => openWords("known")}
+            onClick={openWords}
             className={`rounded-xl p-3 text-center border transition-colors flex flex-col items-center justify-center min-h-[72px] ${panel === "known" ? "bg-emerald-500/20 border-emerald-500/40" : "bg-slate-800 border-slate-700 hover:border-emerald-500/40"}`}
           >
             <p className="text-2xl font-bold text-emerald-400">{levelKnownCount}</p>
             <p className="text-xs text-slate-400 mt-0.5">Known ↗</p>
-          </button>
-          <button
-            onClick={() => openWords("learning")}
-            className={`rounded-xl p-3 text-center border transition-colors flex flex-col items-center justify-center min-h-[72px] ${panel === "learning" ? "bg-amber-500/20 border-amber-500/40" : "bg-slate-800 border-slate-700 hover:border-amber-500/40"}`}
-          >
-            <p className="text-2xl font-bold text-amber-400">{levelLearningCount}</p>
-            <p className="text-xs text-slate-400 mt-0.5">Learning ↗</p>
           </button>
         </div>
         {/* Level progress bar */}
@@ -249,10 +228,10 @@ export function StudentDashboardClient({
       )}
 
       {/* Word list panel */}
-      {(panel === "known" || panel === "learning") && (
+      {panel === "known" && (
         <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
           <h2 className="text-base font-bold text-white mb-4">
-            {wordState === "known" ? "✅ Known Words" : "📖 Learning Words"}
+            ✅ Known Words
             {words && <span className="text-slate-500 font-normal text-sm ml-2">({words.length})</span>}
           </h2>
           {loadingWords && <p className="text-slate-500 text-sm text-center py-4">Loading...</p>}
@@ -261,7 +240,7 @@ export function StudentDashboardClient({
             <div className="flex flex-wrap gap-2">
               {words.map((w, i) => (
                 <span key={i} title={`${w.pinyin} — ${w.english} (${w.level})`}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm border ${wordState === "known" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300" : "bg-amber-500/10 border-amber-500/20 text-amber-300"}`}>
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm border bg-emerald-500/10 border-emerald-500/20 text-emerald-300">
                   <span className="font-bold text-base">{w.character}</span>
                   <span className="text-xs opacity-70">{w.pinyin}</span>
                 </span>

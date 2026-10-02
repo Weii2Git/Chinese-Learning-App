@@ -171,28 +171,26 @@ export async function bulkUpdate(
 }
 
 /**
- * Get total known and learning counts across ALL levels for a student.
+ * Get total known count across ALL levels for a student.
  */
 export async function getTotalKnowledgeCounts(
   studentId: string
-): Promise<{ known: number; learning: number }> {
+): Promise<{ known: number }> {
   const records = await readKnowledgeRecords();
   let known = 0;
-  let learning = 0;
 
   for (const r of records) {
     if (r.studentId !== studentId) continue;
     if (r.state === "known") known++;
-    else if (r.state === "learning") learning++;
   }
 
-  return { known, learning };
+  return { known };
 }
 
 /**
  * Get a summary of knowledge states for a student at a specific level.
- * Returns counts of known, learning, and don't know words, plus the total
- * and the percentage of known words.
+ * Returns counts of known and don't know words, plus the total and the
+ * percentage of known words.
  */
 export async function getKnowledgeSummary(
   studentId: string,
@@ -208,7 +206,6 @@ export async function getKnowledgeSummary(
   if (total === 0) {
     return {
       known: 0,
-      learning: 0,
       dontKnow: 0,
       total: 0,
       knownPercentage: 0,
@@ -216,27 +213,21 @@ export async function getKnowledgeSummary(
   }
 
   let known = 0;
-  let learning = 0;
 
   for (const word of wordsAtLevel) {
     const record = records.find(
       (r) => r.studentId === studentId && r.wordId === word.id
     );
-    if (record) {
-      if (record.state === "known") {
-        known++;
-      } else if (record.state === "learning") {
-        learning++;
-      }
+    if (record && record.state === "known") {
+      known++;
     }
   }
 
-  const dontKnow = total - known - learning;
+  const dontKnow = total - known;
   const knownPercentage = (known / total) * 100;
 
   return {
     known,
-    learning,
     dontKnow,
     total,
     knownPercentage,

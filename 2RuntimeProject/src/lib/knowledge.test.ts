@@ -86,18 +86,18 @@ describe("KnowledgeService", () => {
 
   describe("updateKnowledgeState", () => {
     it("creates a new record when none exists", async () => {
-      await updateKnowledgeState("student-1", "1-a:你", "learning", "1-a");
+      await updateKnowledgeState("student-1", "1-a:你", "don't know", "1-a");
 
       const records = await readKnowledgeRecords();
       expect(records).toHaveLength(1);
       expect(records[0].studentId).toBe("student-1");
       expect(records[0].wordId).toBe("1-a:你");
-      expect(records[0].state).toBe("learning");
+      expect(records[0].state).toBe("don't know");
       expect(records[0].level).toBe("1-a");
     });
 
     it("updates an existing record", async () => {
-      await updateKnowledgeState("student-1", "1-a:你", "learning", "1-a");
+      await updateKnowledgeState("student-1", "1-a:你", "don't know", "1-a");
       await updateKnowledgeState("student-1", "1-a:你", "known", "1-a");
 
       const records = await readKnowledgeRecords();
@@ -107,7 +107,7 @@ describe("KnowledgeService", () => {
 
     it("does not affect other students' records", async () => {
       await updateKnowledgeState("student-1", "1-a:你", "known", "1-a");
-      await updateKnowledgeState("student-2", "1-a:你", "learning", "1-a");
+      await updateKnowledgeState("student-2", "1-a:你", "don't know", "1-a");
 
       const records = await readKnowledgeRecords();
       expect(records).toHaveLength(2);
@@ -115,7 +115,7 @@ describe("KnowledgeService", () => {
       const s1Record = records.find((r) => r.studentId === "student-1");
       const s2Record = records.find((r) => r.studentId === "student-2");
       expect(s1Record?.state).toBe("known");
-      expect(s2Record?.state).toBe("learning");
+      expect(s2Record?.state).toBe("don't know");
     });
   });
 
@@ -123,7 +123,7 @@ describe("KnowledgeService", () => {
     it("creates multiple records in a single operation", async () => {
       const updates: KnowledgeUpdate[] = [
         { wordId: "1-a:你", level: "1-a", newState: "known" },
-        { wordId: "1-a:好", level: "1-a", newState: "learning" },
+        { wordId: "1-a:好", level: "1-a", newState: "don't know" },
         { wordId: "1-a:我", level: "1-a", newState: "don't know" },
       ];
 
@@ -134,7 +134,7 @@ describe("KnowledgeService", () => {
 
       const states = records.map((r) => ({ wordId: r.wordId, state: r.state }));
       expect(states).toContainEqual({ wordId: "1-a:你", state: "known" });
-      expect(states).toContainEqual({ wordId: "1-a:好", state: "learning" });
+      expect(states).toContainEqual({ wordId: "1-a:好", state: "don't know" });
       expect(states).toContainEqual({
         wordId: "1-a:我",
         state: "don't know",
@@ -143,11 +143,11 @@ describe("KnowledgeService", () => {
 
     it("updates existing records and creates new ones in a single operation", async () => {
       // Pre-populate one record
-      await updateKnowledgeState("student-1", "1-a:你", "learning", "1-a");
+      await updateKnowledgeState("student-1", "1-a:你", "don't know", "1-a");
 
       const updates: KnowledgeUpdate[] = [
         { wordId: "1-a:你", level: "1-a", newState: "known" },
-        { wordId: "1-a:好", level: "1-a", newState: "learning" },
+        { wordId: "1-a:好", level: "1-a", newState: "don't know" },
       ];
 
       await bulkUpdate("student-1", updates);
@@ -165,7 +165,6 @@ describe("KnowledgeService", () => {
       // Mock getWordsForLevel to return empty for a non-existent level
       const summary = await getKnowledgeSummary("student-1", "99-z");
       expect(summary.known).toBe(0);
-      expect(summary.learning).toBe(0);
       expect(summary.dontKnow).toBe(0);
       expect(summary.total).toBe(0);
       expect(summary.knownPercentage).toBe(0);
@@ -180,7 +179,6 @@ describe("KnowledgeService", () => {
       const summary = await getSummary("student-1", "1-a");
       expect(summary.dontKnow).toBe(summary.total);
       expect(summary.known).toBe(0);
-      expect(summary.learning).toBe(0);
     });
   });
 

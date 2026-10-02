@@ -6,7 +6,7 @@ import { useLessonContext } from "@/lib/lesson-context";
 import { QuestionCard } from "@/components/QuestionCard";
 import { JokeLoader } from "@/components/JokeLoader";
 import { buildTest } from "@/lib/question-generator";
-import { QUESTION_TIMER_MS, QUICK_THRESHOLD_MS } from "@/lib/constants";
+import { QUESTION_TIMER_MS } from "@/lib/constants";
 import type { Question, QuestionResult, ComprehensionQuestion } from "@/lib/types";
 
 type TestPhase = "loading" | "ready" | "error";
@@ -94,7 +94,7 @@ export default function TestPage() {
     if (!currentQuestion) return;
     const correctAnswer = currentQuestion.data.correctAnswer;
     const isCorrect = selectedAnswer === correctAnswer;
-    const result: QuestionResult = { question: currentQuestion, selectedAnswer, isCorrect, elapsedMs, isQuick: isCorrect && elapsedMs <= QUICK_THRESHOLD_MS };
+    const result: QuestionResult = { question: currentQuestion, selectedAnswer, isCorrect, elapsedMs };
     addResult(result);
     resultsRef.current = [...resultsRef.current, result];
     latestResultRef.current = result;

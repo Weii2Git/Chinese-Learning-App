@@ -19,7 +19,7 @@ export interface Word {
   level: string; // e.g. "1-b"
 }
 
-export type KnowledgeState = "known" | "learning" | "don't know";
+export type KnowledgeState = "known" | "don't know";
 
 export interface KnowledgeRecord {
   studentId: string;
@@ -63,10 +63,9 @@ export type Question =
 
 export interface QuestionResult {
   question: Question;
-  selectedAnswer: string | null; // null if timer expired
+  selectedAnswer: string | null; // null if unanswered
   isCorrect: boolean;
-  elapsedMs: number;
-  isQuick: boolean; // elapsedMs <= QUICK_THRESHOLD_MS
+  elapsedMs: number; // kept for analytics only; does not affect classification
 }
 
 export interface LessonState {
@@ -96,7 +95,6 @@ export interface WordSelection {
 
 export interface KnowledgeSummary {
   known: number;
-  learning: number;
   dontKnow: number;
   total: number;
   knownPercentage: number;

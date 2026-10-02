@@ -100,7 +100,8 @@ export function resetInterval(
 
 /**
  * Select and sort review word candidates from knowledge records.
- * Filters to "known" and "learning" records, sorts by priority:
+ * Every introduced word is reviewable — both "known" (to keep it fresh) and
+ * "don't know" (to re-test until it becomes known). Sorted by priority:
  * - Overdue first (most overdue first, i.e. largest overdue duration)
  * - Then nearest upcoming due dates
  * Returns up to `limit` records.
@@ -110,8 +111,8 @@ export function prioritizeReviewWords(
   now: string,
   limit: number
 ): KnowledgeRecord[] {
-  // Filter to "known" and "learning" records (learning words need review too)
-  const reviewable = records.filter((r) => r.state === "known" || r.state === "learning");
+  // Any introduced word is reviewable (known or don't know).
+  const reviewable = records;
 
   // Sort by overdue amount descending (most overdue first)
   const sorted = [...reviewable].sort((a, b) => {
@@ -127,5 +128,5 @@ export function prioritizeReviewWords(
  * Count how many records are currently overdue.
  */
 export function countOverdue(records: KnowledgeRecord[], now: string): number {
-  return records.filter((r) => (r.state === "known" || r.state === "learning") && isDue(r, now)).length;
+  return records.filter((r) => isDue(r, now)).length;
 }

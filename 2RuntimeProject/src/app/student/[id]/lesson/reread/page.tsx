@@ -6,7 +6,7 @@ import { useLessonContext } from "@/lib/lesson-context";
 import { StoryDisplay } from "@/components/StoryDisplay";
 import { QuestionCard } from "@/components/QuestionCard";
 import { buildTest } from "@/lib/question-generator";
-import { QUESTION_TIMER_MS, QUICK_THRESHOLD_MS } from "@/lib/constants";
+import { QUESTION_TIMER_MS } from "@/lib/constants";
 import type { ComprehensionQuestion, Question, QuestionResult, Word } from "@/lib/types";
 
 type Phase = "reread" | "loading" | "questions" | "error";
@@ -93,7 +93,7 @@ export default function RereadPage() {
     const currentQuestion = retestQuestions[currentIndex];
     if (!currentQuestion) return;
     const isCorrect = selectedAnswer === currentQuestion.data.correctAnswer;
-    const result: QuestionResult = { question: currentQuestion, selectedAnswer, isCorrect, elapsedMs, isQuick: isCorrect && elapsedMs <= QUICK_THRESHOLD_MS };
+    const result: QuestionResult = { question: currentQuestion, selectedAnswer, isCorrect, elapsedMs };
     addResult(result);
     setLoopAnswers((prev) => [...prev, result]);
   }, [currentIndex, retestQuestions, addResult]);

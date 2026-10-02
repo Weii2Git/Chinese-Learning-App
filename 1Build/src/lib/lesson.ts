@@ -1,7 +1,6 @@
 import {
   LEVELS,
   NEW_WORDS_PER_LESSON,
-  QUICK_THRESHOLD_MS,
   REVIEW_WORDS_PER_LESSON,
   REVIEW_WORDS_BUFFER,
 } from "./constants";
@@ -23,15 +22,16 @@ import type {
 } from "./types";
 
 /**
- * Select words for a lesson: up to 5 new words and up to 10 review words.
+ * Select words for a lesson: up to 5 new words and a batch of review words.
  *
- * New words: words with knowledge state "learning" or "don't know" from the
- * student's current level and earlier levels (current level prioritized first).
+ * New words: the next words in the current level's authored order that have
+ * NEVER been introduced (no knowledge record yet). We walk the level list in
+ * order, so each lesson advances through the level. If the current level is
+ * fully introduced, we fall back to earlier levels' not-yet-introduced words.
  *
- * Review words: words with knowledge state "known".
- *
- * If fewer than 10 review words are available, fill remaining slots with
- * additional words from the current level that aren't already selected.
+ * Review words: every word that HAS been introduced (any knowledge record,
+ * whether "known" or "don't know"), prioritized by the SRS schedule. "Don't
+ * know" words keep coming back until they are answered correctly (→ "known").
  */
 export async function selectWordsForLesson(
   studentId: string,
@@ -57,32 +57,29 @@ export async function selectWordsForLesson(
     (r) => r.studentId === studentId
   );
 
-  // Build a map of wordId -> knowledge state
-  const knowledgeMap = new Map<string, KnowledgeState>();
+  // Set of wordIds the student has already been introduced to (has a record).
+  // "Introduced" is based on record EXISTENCE, not state — a word answered
+  // wrong (state "don't know") has still been introduced and must not be
+  // offered again as a brand-new word.
+  const introducedIds = new Set<string>();
   for (const record of studentRecords) {
-    knowledgeMap.set(record.wordId, record.state);
+    introducedIds.add(record.wordId);
   }
 
-  // Helper to get knowledge state (defaults to "don't know")
-  function getState(wordId: string): KnowledgeState {
-    return knowledgeMap.get(wordId) ?? "don't know";
-  }
-
-  // Separate words into new word candidates and review word candidates
+  // Separate words into current level vs earlier levels, preserving the
+  // authored order from the word list (getWordsForLevel/getAllWords return
+  // words in document order).
   const currentLevelWords = relevantWords.filter((w) => w.level === level);
   const earlierLevelWords = relevantWords.filter((w) => w.level !== level);
 
-  // New words: only "don't know" (never introduced) — prioritize current level first
-  // "learning" words go to the review pool instead
-  const newWordCandidatesCurrentLevel = currentLevelWords.filter((w) => {
-    const state = getState(w.id);
-    return state === "don't know";
-  });
-
-  const newWordCandidatesEarlierLevels = earlierLevelWords.filter((w) => {
-    const state = getState(w.id);
-    return state === "don't know";
-  });
+  // New words: walk the current level IN ORDER and take the next words that
+  // have never been introduced; then fall back to earlier levels if needed.
+  const newWordCandidatesCurrentLevel = currentLevelWords.filter(
+    (w) => !introducedIds.has(w.id)
+  );
+  const newWordCandidatesEarlierLevels = earlierLevelWords.filter(
+    (w) => !introducedIds.has(w.id)
+  );
 
   const allNewWordCandidates: Word[] = [
     ...newWordCandidatesCurrentLevel,
@@ -91,8 +88,9 @@ export async function selectWordsForLesson(
 
   let newWords: Word[] = allNewWordCandidates.slice(0, NEW_WORDS_PER_LESSON);
 
-  // Review words: use SRS prioritization for "known" and "learning" state words
-  const reviewableRecords = studentRecords.filter((r) => r.state === "known" || r.state === "learning");
+  // Review words: every introduced word is reviewable (known or don't know),
+  // prioritized by SRS.
+  const reviewableRecords = studentRecords;
   const now = new Date().toISOString();
   
   // Check for backlog — if overdue words exist, allow up to 10 extra review slots (max 30 total)
@@ -206,32 +204,27 @@ export async function completeLessonAndUpdateState(
     if (result.question.kind === "comprehension") {
       if (result.isCorrect) {
         correctCount++;
-        starsEarned += result.elapsedMs <= QUICK_THRESHOLD_MS
-          ? settings.starsPerCorrectFast
-          : settings.starsPerCorrectSlow;
+        starsEarned += settings.starsPerCorrect;
       }
       continue;
     }
 
-    // Vocab questions: update knowledge state AND count stars
+    // Vocab questions: update knowledge state AND count stars.
+    // Classification is purely answer-based (time no longer matters):
+    //   correct → "known", wrong/unanswered → "don't know".
 
     const vocabData = result.question.data;
     const existingRecord = knowledgeMap.get(vocabData.wordId);
-    const isReviewWord = existingRecord?.state === "known";
+    // Any word with an existing record is a review word (it has been
+    // introduced before, whether it was known or not).
+    const isReviewWord = !!existingRecord;
     let newState: KnowledgeState;
 
-    if (result.isCorrect && result.elapsedMs <= QUICK_THRESHOLD_MS) {
-      // Quick correct → "known"
+    if (result.isCorrect) {
       newState = "known";
       correctCount++;
-      starsEarned += settings.starsPerCorrectFast;
-    } else if (result.isCorrect && result.elapsedMs > QUICK_THRESHOLD_MS) {
-      // Slow correct → "learning"
-      newState = "learning";
-      correctCount++;
-      starsEarned += settings.starsPerCorrectSlow;
+      starsEarned += settings.starsPerCorrect;
     } else {
-      // Wrong (including timer expired) → "don't know"
       newState = "don't know";
     }
 
@@ -242,37 +235,31 @@ export async function completeLessonAndUpdateState(
       newState,
     };
 
-    // Save compound context when first learning a word (character ≠ compound means it was tested as a compound)
-    const isNewlyLearned = !isReviewWord && (newState === "known" || newState === "learning");
-    if (isNewlyLearned && vocabData.character !== vocabData.wordId.split(":").pop()) {
+    // Save compound context when a word is first introduced (character ≠
+    // compound means it was tested as a compound).
+    const isFirstIntroduction = !isReviewWord;
+    if (isFirstIntroduction && vocabData.character !== vocabData.wordId.split(":").pop()) {
       // The question was tested as a compound word
       update.compoundWord = vocabData.character;
       update.compoundMeaning = vocabData.correctMeaning;
-    } else if (isNewlyLearned && vocabData.character.length > 1) {
+    } else if (isFirstIntroduction && vocabData.character.length > 1) {
       // Multi-character word tested directly
       update.compoundWord = vocabData.character;
       update.compoundMeaning = vocabData.correctMeaning;
     }
 
-    if (isReviewWord) {
-      // This is a review word (already "known")
-      if (result.isCorrect) {
-        // Any correct answer on review word: advance interval
-        const currentStage = existingRecord.intervalStage ?? 0;
-        const srsFields = advanceInterval(currentStage, now);
-        update.intervalStage = srsFields.intervalStage;
-        update.lastReviewedAt = srsFields.lastReviewedAt;
-        update.nextDueDate = srsFields.nextDueDate;
-      } else {
-        // Wrong answer on review word: reset interval to stage 1
-        const srsFields = resetInterval(now);
-        update.intervalStage = srsFields.intervalStage;
-        update.lastReviewedAt = srsFields.lastReviewedAt;
-        update.nextDueDate = srsFields.nextDueDate;
-      }
-    } else if (newState === "known" || newState === "learning") {
-      // Word transitioning to "known" or "learning" for the first time: initialize SRS at stage 1
-      const srsFields = advanceInterval(0, now);
+    // SRS scheduling. Every introduced word gets SRS fields so it flows through
+    // the review pipeline. Correct answers advance the interval; wrong answers
+    // reset to stage 1 so the word comes back soon and keeps being re-tested
+    // until it is answered correctly.
+    if (result.isCorrect) {
+      const currentStage = isReviewWord ? (existingRecord.intervalStage ?? 0) : 0;
+      const srsFields = advanceInterval(currentStage, now);
+      update.intervalStage = srsFields.intervalStage;
+      update.lastReviewedAt = srsFields.lastReviewedAt;
+      update.nextDueDate = srsFields.nextDueDate;
+    } else {
+      const srsFields = resetInterval(now);
       update.intervalStage = srsFields.intervalStage;
       update.lastReviewedAt = srsFields.lastReviewedAt;
       update.nextDueDate = srsFields.nextDueDate;

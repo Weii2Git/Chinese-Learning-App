@@ -21,7 +21,6 @@ interface WordInfo {
 interface StudentWordData {
   student: StudentInfo;
   knownWords: WordInfo[];
-  learningWords: WordInfo[];
   nextNewWords: WordInfo[];
   nextReviewWords: WordInfo[];
 }
@@ -61,8 +60,7 @@ export default function AdminPage() {
   // Test settings state
   const [vocabCount, setVocabCount] = useState(20);
   const [compCount, setCompCount] = useState(5);
-  const [starsFast, setStarsFast] = useState(1);
-  const [starsSlow, setStarsSlow] = useState(1);
+  const [starsPerCorrect, setStarsPerCorrect] = useState(1);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsMsg, setSettingsMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -82,8 +80,7 @@ export default function AdminPage() {
     fetch("/api/admin/settings").then((r) => r.json()).then((data) => {
       setVocabCount(data.vocabQuestionsCount);
       setCompCount(data.comprehensionQuestionsCount);
-      setStarsFast(data.starsPerCorrectFast);
-      setStarsSlow(data.starsPerCorrectSlow);
+      setStarsPerCorrect(data.starsPerCorrect);
       setSettingsLoaded(true);
     }).catch(() => setSettingsLoaded(true));
   }, []);
@@ -154,7 +151,7 @@ export default function AdminPage() {
       const res = await fetch("/api/admin/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vocabQuestionsCount: vocabCount, comprehensionQuestionsCount: compCount, starsPerCorrectFast: starsFast, starsPerCorrectSlow: starsSlow }),
+        body: JSON.stringify({ vocabQuestionsCount: vocabCount, comprehensionQuestionsCount: compCount, starsPerCorrect }),
       });
       if (!res.ok) throw new Error((await res.json()).error);
       setSettingsMsg({ type: "success", text: "Settings saved!" });
@@ -344,7 +341,7 @@ export default function AdminPage() {
         {/* ── 2. WORD STATUS ── */}
         <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
           <h2 className="text-lg font-bold text-white mb-1">📚 Student Word Status</h2>
-          <p className="text-slate-500 text-sm mb-5">View learned, learning, and upcoming words per student</p>
+          <p className="text-slate-500 text-sm mb-5">View learned and upcoming words per student (all levels)</p>
 
           <select
             value={selectedStudent || ""}
@@ -374,19 +371,6 @@ export default function AdminPage() {
                       <span key={i} title={`${w.pinyin} - ${w.english}`} className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 text-xs">
                         <span className="font-bold text-emerald-300">{w.character}</span>
                         <span className="text-emerald-600">{w.pinyin}</span>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-amber-400 uppercase tracking-wide mb-2">Learning ({wordData.learningWords.length})</p>
-                {wordData.learningWords.length === 0 ? <p className="text-xs text-slate-600">None</p> : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {wordData.learningWords.map((w, i) => (
-                      <span key={i} title={`${w.pinyin} - ${w.english}`} className="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2 py-1 text-xs">
-                        <span className="font-bold text-amber-300">{w.character}</span>
-                        <span className="text-amber-600">{w.pinyin}</span>
                       </span>
                     ))}
                   </div>
@@ -439,13 +423,8 @@ export default function AdminPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">⭐ per Fast Correct (Known)</label>
-                  <input type="number" min="0" max="5" step="0.1" value={starsFast} onChange={(e) => setStarsFast(Number(e.target.value))}
-                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">⭐ per Slow Correct (Learning)</label>
-                  <input type="number" min="0" max="5" step="0.1" value={starsSlow} onChange={(e) => setStarsSlow(Number(e.target.value))}
+                  <label className="block text-xs font-medium text-slate-400 mb-1">⭐ per Correct Answer</label>
+                  <input type="number" min="0" max="5" step="0.1" value={starsPerCorrect} onChange={(e) => setStarsPerCorrect(Number(e.target.value))}
                     className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
                 </div>
               </div>

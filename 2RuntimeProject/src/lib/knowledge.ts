@@ -60,11 +60,11 @@ export async function bulkUpdate(
 }
 
 /**
- * Get total known and learning counts across ALL levels for a student.
+ * Get total known count across ALL levels for a student.
  */
 export async function getTotalKnowledgeCounts(
   studentId: string
-): Promise<{ known: number; learning: number }> {
+): Promise<{ known: number }> {
   return getImpl().getTotalKnowledgeCounts(studentId);
 }
 

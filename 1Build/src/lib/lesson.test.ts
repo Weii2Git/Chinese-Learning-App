@@ -60,10 +60,14 @@ function makeVocabResult(
   elapsedMs: number
 ): QuestionResult {
   const vocabData: VocabQuestion = {
-    type: "pinyin",
+    type: "combined",
     wordId,
     character: wordId,
-    correctAnswer: "correct",
+    correctAnswer: "correct|correct",
+    correctPinyin: "correct",
+    correctMeaning: "correct",
+    pinyinOptions: ["correct", "a", "b", "c"],
+    meaningOptions: ["correct", "a", "b", "c"],
     options: ["correct", "a", "b", "c"],
     isNewWord: false,
   };
@@ -72,7 +76,6 @@ function makeVocabResult(
     selectedAnswer: isCorrect ? "correct" : "wrong",
     isCorrect,
     elapsedMs,
-    isQuick: isCorrect && elapsedMs <= 8000,
   };
 }
 
@@ -81,8 +84,8 @@ describe("selectWordsForLesson", () => {
     vi.clearAllMocks();
   });
 
-  it("selects up to 5 new words and up to 10 review words", async () => {
-    // 10 words at level 1-a: 5 known, 5 don't know
+  it("introduces the next never-seen words and reviews already-introduced ones", async () => {
+    // 10 words at level 1-a: w0-w4 already introduced (have records), w5-w9 never seen
     const words: Word[] = [];
     for (let i = 0; i < 10; i++) {
       words.push(makeWord(`w${i}`, "1-a"));
@@ -90,24 +93,22 @@ describe("selectWordsForLesson", () => {
     mockGetAllWords.mockResolvedValue(words);
 
     const knowledgeRecords: KnowledgeRecord[] = [];
-    // First 5 are "known"
+    // First 5 have a record (introduced) — mix of known and don't know
     for (let i = 0; i < 5; i++) {
       knowledgeRecords.push({
         studentId: "s1",
         wordId: `w${i}`,
         level: "1-a",
-        state: "known",
+        state: i < 3 ? "known" : "don't know",
         lastUpdated: new Date().toISOString(),
       });
     }
-    // Remaining 5 have no record (default "don't know")
+    // Remaining 5 (w5-w9) have NO record → never introduced
     mockReadKnowledgeRecords.mockResolvedValue(knowledgeRecords);
 
     const result = await selectWordsForLesson("s1", "1-a");
 
-    expect(result.newWords.length).toBe(5);
-    expect(result.reviewWords.length).toBe(5);
-    // New words should be w5-w9 (don't know)
+    // New words = next 5 never-introduced, in order: w5-w9
     expect(result.newWords.map((w) => w.id)).toEqual([
       "w5",
       "w6",
@@ -115,8 +116,8 @@ describe("selectWordsForLesson", () => {
       "w8",
       "w9",
     ]);
-    // Review words should be w0-w4 (known)
-    expect(result.reviewWords.map((w) => w.id)).toEqual([
+    // Review words include the 5 already-introduced records (known OR don't know)
+    expect(result.reviewWords.map((w) => w.id).slice(0, 5).sort()).toEqual([
       "w0",
       "w1",
       "w2",
@@ -125,10 +126,10 @@ describe("selectWordsForLesson", () => {
     ]);
   });
 
-  it("fills remaining review slots from current level when fewer than 10 review words", async () => {
-    // 15 words at level 1-a: 3 known, 5 don't know, 7 more available
+  it("fills remaining review slots from current level when few words are introduced", async () => {
+    // 25 words at level 1-a: 3 introduced (known), rest never seen
     const words: Word[] = [];
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 25; i++) {
       words.push(makeWord(`w${i}`, "1-a"));
     }
     mockGetAllWords.mockResolvedValue(words);
@@ -142,16 +143,22 @@ describe("selectWordsForLesson", () => {
 
     const result = await selectWordsForLesson("s1", "1-a");
 
-    // 5 new words (from the "don't know" pool)
-    expect(result.newWords.length).toBe(5);
-    // 3 known + 7 fill from current level = 10
-    expect(result.reviewWords.length).toBe(10);
-    // First 3 should be the known words
-    expect(result.reviewWords.slice(0, 3).map((w) => w.id)).toEqual([
+    // 5 new words: the next never-introduced in order (w3-w7)
+    expect(result.newWords.map((w) => w.id)).toEqual([
+      "w3",
+      "w4",
+      "w5",
+      "w6",
+      "w7",
+    ]);
+    // The 3 introduced records come first in the review list
+    expect(result.reviewWords.slice(0, 3).map((w) => w.id).sort()).toEqual([
       "w0",
       "w1",
       "w2",
     ]);
+    // Remaining review slots are filled from the current level
+    expect(result.reviewWords.length).toBeGreaterThan(3);
   });
 
   it("prioritizes current level words over earlier level words for new words", async () => {
@@ -210,7 +217,7 @@ describe("completeLessonAndUpdateState", () => {
     lessonsCompleted: 5,
   };
 
-  it("classifies quick correct, slow correct, and wrong answers", async () => {
+  it("classifies correct answers as known and wrong answers as don't know (time ignored)", async () => {
     mockGetStudent.mockResolvedValue(mockStudent);
     mockBulkUpdate.mockResolvedValue(undefined);
     mockAwardPerformanceStars.mockResolvedValue(11);
@@ -221,18 +228,19 @@ describe("completeLessonAndUpdateState", () => {
     mockReadKnowledgeRecords.mockResolvedValue([]);
 
     const results: QuestionResult[] = [
-      makeVocabResult("w1", true, 5000),  // quick correct
-      makeVocabResult("w2", true, 12000), // slow correct
-      makeVocabResult("w3", false, 3000), // wrong
+      makeVocabResult("w1", true, 5000),  // fast correct → known
+      makeVocabResult("w2", true, 12000), // slow correct → still known (time ignored)
+      makeVocabResult("w3", false, 3000), // wrong → don't know
     ];
 
     const outcome = await completeLessonAndUpdateState("s1", results);
 
     expect(outcome.knowledgeUpdates).toHaveLength(3);
     expect(outcome.knowledgeUpdates[0].newState).toBe("known");
-    expect(outcome.knowledgeUpdates[1].newState).toBe("learning");
+    expect(outcome.knowledgeUpdates[1].newState).toBe("known");
     expect(outcome.knowledgeUpdates[2].newState).toBe("don't know");
-    expect(outcome.performanceStarsEarned).toBe(1);
+    // Two correct answers at the default single rate (1 star each)
+    expect(outcome.performanceStarsEarned).toBe(2);
   });
 
   it("skips comprehension questions for knowledge updates", async () => {
@@ -258,7 +266,6 @@ describe("completeLessonAndUpdateState", () => {
         selectedAnswer: "A",
         isCorrect: true,
         elapsedMs: 3000,
-        isQuick: true,
       },
     ];
 
@@ -280,9 +287,10 @@ describe("completeLessonAndUpdateState", () => {
 
     await completeLessonAndUpdateState("s1", []);
 
-    expect(mockUpdateStudent).toHaveBeenCalledWith("s1", {
-      lessonsCompleted: 6,
-    });
+    expect(mockUpdateStudent).toHaveBeenCalledWith(
+      "s1",
+      expect.objectContaining({ lessonsCompleted: 6 })
+    );
   });
 
   it("returns level advancement info when student levels up", async () => {

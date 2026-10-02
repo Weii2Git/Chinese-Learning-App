@@ -3,17 +3,17 @@ import { getStudent } from "@/lib/student";
 import { readKnowledgeRecords } from "@/lib/knowledge";
 import { getAllWords } from "@/lib/word-list";
 
-// GET /api/students/[id]/words?state=known|learning
+// GET /api/students/[id]/words?state=known
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const state = req.nextUrl.searchParams.get("state") as "known" | "learning" | null;
+    const state = req.nextUrl.searchParams.get("state") as "known" | null;
 
-    if (!state || (state !== "known" && state !== "learning")) {
-      return NextResponse.json({ error: "state must be 'known' or 'learning'" }, { status: 400 });
+    if (state !== "known") {
+      return NextResponse.json({ error: "state must be 'known'" }, { status: 400 });
     }
 
     const student = await getStudent(id);

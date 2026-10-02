@@ -99,7 +99,6 @@ export default function TestSummaryPage() {
   const correctCount = lastRoundResults.filter((r) => r.isCorrect).length;
   const starsEarned = performanceStarsEarned;
   const knownCount = knowledgeUpdates.filter((u) => u.newState === "known").length;
-  const learningCount = knowledgeUpdates.filter((u) => u.newState === "learning").length;
   const dontKnowCount = knowledgeUpdates.filter((u) => u.newState === "don't know").length;
   const accuracy = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
 
@@ -134,14 +133,10 @@ export default function TestSummaryPage() {
         {/* Word updates */}
         <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">Word Updates</p>
-          <div className="grid grid-cols-3 gap-3 text-center">
+          <div className="grid grid-cols-2 gap-3 text-center">
             <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3">
               <p className="text-2xl font-bold text-emerald-400">{knownCount}</p>
               <p className="text-xs text-emerald-600 mt-0.5">Known</p>
-            </div>
-            <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3">
-              <p className="text-2xl font-bold text-amber-400">{learningCount}</p>
-              <p className="text-xs text-amber-600 mt-0.5">Learning</p>
             </div>
             <div className="rounded-xl bg-slate-800 p-3">
               <p className="text-2xl font-bold text-slate-400">{dontKnowCount}</p>

@@ -183,32 +183,30 @@ export async function bulkUpdate(
 }
 
 /**
- * Get total known and learning counts across ALL levels for a student.
+ * Get total known count across ALL levels for a student.
  */
 export async function getTotalKnowledgeCounts(
   studentId: string
-): Promise<{ known: number; learning: number }> {
+): Promise<{ known: number }> {
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
     .from('knowledge_records')
     .select('state')
     .eq('student_id', studentId)
-    .in('state', ['known', 'learning']);
+    .eq('state', 'known');
 
   if (error) {
     throw new Error(`getTotalKnowledgeCounts failed: ${error.message}`);
   }
 
   let known = 0;
-  let learning = 0;
 
   for (const row of data ?? []) {
     if (row.state === 'known') known++;
-    else if (row.state === 'learning') learning++;
   }
 
-  return { known, learning };
+  return { known };
 }
 
 /**
@@ -239,7 +237,6 @@ export async function getKnowledgeSummary(
   if (total === 0) {
     return {
       known: 0,
-      learning: 0,
       dontKnow: 0,
       total: 0,
       knownPercentage: 0,
@@ -249,23 +246,19 @@ export async function getKnowledgeSummary(
   // Count states only for words that exist in the word list at this level
   const wordIdsAtLevel = new Set(wordsAtLevel.map((w) => w.id));
   let known = 0;
-  let learning = 0;
 
   for (const record of queryResult.data ?? []) {
     if (!wordIdsAtLevel.has(record.word_id)) continue;
     if (record.state === 'known') {
       known++;
-    } else if (record.state === 'learning') {
-      learning++;
     }
   }
 
-  const dontKnow = total - known - learning;
+  const dontKnow = total - known;
   const knownPercentage = (known / total) * 100;
 
   return {
     known,
-    learning,
     dontKnow,
     total,
     knownPercentage,

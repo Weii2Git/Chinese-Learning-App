@@ -6,7 +6,7 @@ import { getAllWords } from "@/lib/word-list";
 
 /**
  * GET /api/admin/student-words?studentId=X
- * Returns the student's known words, learning words, and next planned words.
+ * Returns the student's known words and next planned words.
  */
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -43,16 +43,6 @@ export async function GET(request: NextRequest) {
       nextDueDate: r.nextDueDate,
     }));
 
-  const learningWords = studentRecords
-    .filter((r) => r.state === "learning")
-    .map((r) => ({
-      wordId: r.wordId,
-      character: wordMap.get(r.wordId)?.character ?? r.wordId,
-      pinyin: wordMap.get(r.wordId)?.pinyin ?? "",
-      english: wordMap.get(r.wordId)?.english ?? "",
-      level: r.level || (wordMap.get(r.wordId)?.level ?? ""),
-    }));
-
   // Get next planned words (new + review that would be sent to Gemini)
   let nextNewWords: { character: string; pinyin: string; english: string; level: string }[] = [];
   let nextReviewWords: { character: string; pinyin: string; english: string; level: string }[] = [];
@@ -77,7 +67,6 @@ export async function GET(request: NextRequest) {
   return Response.json({
     student: { id: student.id, name: student.name, level: student.currentLevel },
     knownWords,
-    learningWords,
     nextNewWords,
     nextReviewWords,
   });
