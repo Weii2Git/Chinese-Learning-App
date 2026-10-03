@@ -5,12 +5,20 @@ import { useParams, useRouter } from "next/navigation";
 import { useLessonContext } from "@/lib/lesson-context";
 import { StoryDisplay } from "@/components/StoryDisplay";
 import { QuestionCard } from "@/components/QuestionCard";
-import { buildTest, findCompoundsNeedingMeaning } from "@/lib/question-generator";
 import { QUESTION_TIMER_MS } from "@/lib/constants";
 import type { ComprehensionQuestion, Question, QuestionResult, Word } from "@/lib/types";
 
 type Phase = "reread" | "loading" | "questions" | "error";
 const RETEST_PASS_THRESHOLD = 0.8;
+
+/** Fisher-Yates shuffle (returns the same array, shuffled in place). */
+function shuffle<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 export default function RereadPage() {
   const params = useParams<{ id: string }>();
@@ -69,35 +77,21 @@ export default function RereadPage() {
         throw new Error(data.error || "Failed to generate comprehension questions");
       }
       const { questions: comprehensionQs } = (await res.json()) as { questions: ComprehensionQuestion[] };
-      const allWords = [...lessonState.newWords, ...lessonState.reviewWords];
-      const incorrectIds = new Set(incorrectVocabWords.map((w) => w.id));
-      const otherWords = allWords.filter((w) => !incorrectIds.has(w.id));
-      const reorderedNew = [...incorrectVocabWords, ...otherWords.filter((w) => lessonState.newWords.some((nw) => nw.id === w.id))];
-      const reorderedReview = otherWords.filter((w) => lessonState.reviewWords.some((rw) => rw.id === w.id));
 
-      // Gap-fill compound meanings the story generator may have omitted, so a
-      // compound is never retested with the bare single-character meaning.
-      const wordMeanings = { ...(lessonState.wordMeanings ?? {}) };
-      const needMeaning = findCompoundsNeedingMeaning(
-        reorderedNew, reorderedReview, lessonState.segmentedStory, wordMeanings
+      // Reuse the EXACT vocab questions from the original main test (same
+      // characters, options, and already-resolved compound meanings) rather
+      // than regenerating them. Only the order changes — shuffled each retest.
+      const originalVocab = (lessonState.questions ?? []).filter(
+        (q): q is Question => q.kind === "vocab"
       );
-      if (needMeaning.length > 0) {
-        try {
-          const mRes = await fetch("/api/word-meanings", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ words: needMeaning }),
-          });
-          if (mRes.ok) {
-            const { meanings } = (await mRes.json()) as { meanings: Record<string, string> };
-            Object.assign(wordMeanings, meanings);
-          }
-        } catch {
-          // Best-effort; buildTest falls back to the single character if still missing.
-        }
-      }
+      const shuffledVocab = shuffle([...originalVocab]).slice(0, vocabCount);
 
-      const allRetestQuestions = buildTest(reorderedNew, reorderedReview, comprehensionQs, lessonState.segmentedStory, wordMeanings, undefined, undefined, vocabCount, compCount);
+      // Fresh comprehension questions first, then the reused (shuffled) vocab —
+      // matching the main test's comprehension-first ordering.
+      const comprehensionWrapped: Question[] = comprehensionQs
+        .slice(0, compCount)
+        .map((q) => ({ kind: "comprehension" as const, data: q }));
+      const allRetestQuestions = [...comprehensionWrapped, ...shuffledVocab];
       setRetestQuestions(allRetestQuestions);
       setCurrentIndex(0);
       setLoopAnswers([]);
