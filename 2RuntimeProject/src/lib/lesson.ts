@@ -236,17 +236,24 @@ export async function completeLessonAndUpdateState(
       newState,
     };
 
-    // Save compound context when a word is first introduced (character ≠
-    // compound means it was tested as a compound).
-    const isFirstIntroduction = !isReviewWord;
-    if (isFirstIntroduction && vocabData.character !== vocabData.wordId.split(":").pop()) {
-      // The question was tested as a compound word
+    // Compound context (Option A — one compound per character, refreshed on use):
+    //  - If this lesson tested the character inside a compound word, store that
+    //    compound + meaning (overwriting any previous one).
+    //  - If this lesson tested the bare character (no new compound), keep the
+    //    previously stored compound so it's still used in future tests.
+    // "Tested as a compound" = the displayed character is multi-character
+    // (either a single list-char shown within a compound, e.g. 店 -> 糖果店, or a
+    // multi-character word tested directly).
+    const testedAsCompound = vocabData.character.length > 1;
+    if (testedAsCompound) {
+      // New compound shown this lesson → store/overwrite.
       update.compoundWord = vocabData.character;
       update.compoundMeaning = vocabData.correctMeaning;
-    } else if (isFirstIntroduction && vocabData.character.length > 1) {
-      // Multi-character word tested directly
-      update.compoundWord = vocabData.character;
-      update.compoundMeaning = vocabData.correctMeaning;
+    } else if (existingRecord?.compoundWord && existingRecord?.compoundMeaning) {
+      // No new compound this lesson → preserve the previously stored one.
+      // (Carried forward explicitly so the upsert never blanks it.)
+      update.compoundWord = existingRecord.compoundWord;
+      update.compoundMeaning = existingRecord.compoundMeaning;
     }
 
     // SRS scheduling. Every introduced word gets SRS fields so it flows through

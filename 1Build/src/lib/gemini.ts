@@ -469,3 +469,91 @@ export async function generateComprehensionQuestions(
 
   return collected;
 }
+
+/**
+ * Translate a list of Chinese compound words into short English meanings.
+ *
+ * Used as a targeted gap-fill when the story generator omitted a meaning for a
+ * multi-character word that a vocab question will display. Returns a map of
+ * word -> English meaning. Words the model fails to translate are simply absent
+ * from the map (callers fall back to the single-character meaning).
+ *
+ * Makes a single batched call (with one rate-limit retry). Never throws for a
+ * missing/garbled response — returns whatever could be parsed, so a translation
+ * hiccup can't block building a test.
+ */
+export async function generateWordMeanings(
+  words: string[]
+): Promise<Record<string, string>> {
+  const unique = [...new Set(words.map((w) => w.trim()).filter((w) => w.length > 0))];
+  if (unique.length === 0) return {};
+
+  const client = getClient();
+  const prompt = `你是一位中文到英文的翻译专家。请把下面每个中文词语翻译成简短的英文含义（每个不超过6个英文单词）。
+
+词语：
+${unique.map((w, i) => `${i + 1}. ${w}`).join("\n")}
+
+请严格按照以下JSON格式输出，key是中文词语，value是英文含义，不要包含任何其他文字：
+{
+${unique.map((w) => `  "${w}": "English meaning"`).join(",\n")}
+}`;
+
+  async function attempt(): Promise<Record<string, string>> {
+    const response = await client.models.generateContent({
+      model: MODEL,
+      contents: prompt,
+      config: GENERATION_CONFIG,
+    });
+    const text = response.text;
+    if (!text) return {};
+    return parseWordMeanings(text, unique);
+  }
+
+  try {
+    return await attempt();
+  } catch (error: unknown) {
+    if (isRateLimitError(error)) {
+      await sleep(2000);
+      try {
+        return await attempt();
+      } catch {
+        return {};
+      }
+    }
+    if (isTimeoutError(error)) return {};
+    // Any other failure: return empty so the caller falls back gracefully.
+    return {};
+  }
+}
+
+/**
+ * Parse the JSON object returned by generateWordMeanings. Only keeps entries
+ * whose key was actually requested and whose value is a non-empty string.
+ */
+function parseWordMeanings(
+  text: string,
+  requested: string[]
+): Record<string, string> {
+  let jsonStr = text.trim();
+  const fenced = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) jsonStr = fenced[1].trim();
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonStr);
+  } catch {
+    return {};
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+
+  const requestedSet = new Set(requested);
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+    if (!requestedSet.has(key)) continue;
+    if (typeof value !== "string") continue;
+    const meaning = value.replace(/\s*\(.*?\)\s*/g, "").trim();
+    if (meaning.length > 0) result[key] = meaning;
+  }
+  return result;
+}

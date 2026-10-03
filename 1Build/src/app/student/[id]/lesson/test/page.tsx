@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useLessonContext } from "@/lib/lesson-context";
 import { QuestionCard } from "@/components/QuestionCard";
 import { JokeLoader } from "@/components/JokeLoader";
-import { buildTest } from "@/lib/question-generator";
+import { buildTest, findCompoundsNeedingMeaning } from "@/lib/question-generator";
 import { QUESTION_TIMER_MS } from "@/lib/constants";
 import type { Question, QuestionResult, ComprehensionQuestion } from "@/lib/types";
 
@@ -69,7 +69,31 @@ export default function TestPage() {
         throw new Error(data.error || "Failed to generate comprehension questions");
       }
       const { questions: comprehensionQuestions } = (await compQRes.json()) as { questions: ComprehensionQuestion[] };
-      const fullTest = buildTest(newWords, reviewWords, comprehensionQuestions, lessonState?.segmentedStory, lessonState?.wordMeanings, lessonState?.lookedUpWords, knowledgeRecords, settings.vocabQuestionsCount, settings.comprehensionQuestionsCount);
+
+      // Gap-fill: if any compound that will be shown in the test lacks a meaning
+      // (the story generator occasionally omits one), translate just those and
+      // merge them in, so a compound is never tested with the bare-char meaning.
+      const wordMeanings = { ...(lessonState?.wordMeanings ?? {}) };
+      const needMeaning = findCompoundsNeedingMeaning(
+        newWords, reviewWords, lessonState?.segmentedStory, wordMeanings, knowledgeRecords
+      );
+      if (needMeaning.length > 0) {
+        try {
+          const res = await fetch("/api/word-meanings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ words: needMeaning }),
+          });
+          if (res.ok) {
+            const { meanings } = (await res.json()) as { meanings: Record<string, string> };
+            Object.assign(wordMeanings, meanings);
+          }
+        } catch {
+          // Best-effort; buildTest falls back to the single character if still missing.
+        }
+      }
+
+      const fullTest = buildTest(newWords, reviewWords, comprehensionQuestions, lessonState?.segmentedStory, wordMeanings, lessonState?.lookedUpWords, knowledgeRecords, settings.vocabQuestionsCount, settings.comprehensionQuestionsCount);
       questionsRef.current = fullTest;
       setQuestions(fullTest);
       markNewRoundStart(); // mark where this round's results start

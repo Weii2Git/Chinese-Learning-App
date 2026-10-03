@@ -246,6 +246,50 @@ export function generateCombinedQuestion(
 }
 
 /**
+ * Determine which compound forms shown in the test still lack an English
+ * meaning, so the caller can gap-fill them (e.g. via Gemini) before building.
+ *
+ * For each candidate word, this computes the compound the story would display
+ * (findWordInStory) and checks whether a meaning is already available from:
+ *   - the article's wordMeanings,
+ *   - the local compound dictionary, or
+ *   - a saved compound record whose compound matches the shown compound.
+ * Returns the de-duplicated list of compounds with no available meaning.
+ */
+export function findCompoundsNeedingMeaning(
+  newWords: Word[],
+  reviewWords: Word[],
+  segmentedStory?: string,
+  wordMeanings?: Record<string, string>,
+  knowledgeRecords?: Array<{ wordId: string; compoundWord?: string; compoundMeaning?: string }>
+): string[] {
+  const savedByWordId = new Map<string, { compoundWord: string; compoundMeaning: string }>();
+  for (const rec of knowledgeRecords ?? []) {
+    if (rec.compoundWord && rec.compoundMeaning) {
+      savedByWordId.set(rec.wordId, { compoundWord: rec.compoundWord, compoundMeaning: rec.compoundMeaning });
+    }
+  }
+
+  const needing = new Set<string>();
+  for (const word of [...newWords, ...reviewWords]) {
+    const displayChar = segmentedStory
+      ? findWordInStory(word.character, segmentedStory)
+      : word.character;
+    if (displayChar.length <= 1) continue; // not a compound
+
+    const hasArticle = !!wordMeanings?.[displayChar];
+    const hasDict = !!lookupCompoundMeaning(displayChar);
+    const saved = savedByWordId.get(word.id);
+    const hasSavedMatch = !!(saved && saved.compoundWord === displayChar && saved.compoundMeaning);
+
+    if (!hasArticle && !hasDict && !hasSavedMatch) {
+      needing.add(displayChar);
+    }
+  }
+  return [...needing];
+}
+
+/**
  * Build a complete test:
  * - Tests up to `vocabTarget` words/characters from the article (default 20)
  * - Priority: looked-up words > new words > review words
@@ -366,15 +410,26 @@ export function buildTest(
     let testMeaning: string;
 
     if (isCompound) {
-      // Always test the compound word from the story
-      testChar = displayChar;
-      testPinyin = lookupCompoundPinyin(displayChar, word.pinyin);
-      const geminiMeaning = wordMeanings?.[displayChar];
+      // Test the compound word shown in the story. Resolve its meaning in this
+      // order (never fall back to the bare-character meaning for a compound):
+      //   1. article meaning (wordMeanings, incl. any gap-filled before build)
+      //   2. local compound dictionary
+      //   3. saved record — only if its stored compound matches this one
+      // If none produce a meaning, fall through to testing the single character.
+      const articleMeaning = wordMeanings?.[displayChar];
       const dictMeaning = lookupCompoundMeaning(displayChar);
-      const rawMeaning = geminiMeaning || dictMeaning || word.english;
-      testMeaning = rawMeaning.replace(/\s*\(.*?\)\s*/g, "").trim();
+      const saved = savedCompoundMap.get(word.id);
+      const savedMeaning = saved && saved.compoundWord === displayChar ? saved.compoundMeaning : "";
+      const rawMeaning = articleMeaning || dictMeaning || savedMeaning;
+      const resolved = (rawMeaning || "").replace(/\s*\(.*?\)\s*/g, "").trim();
 
-      if (!testMeaning) {
+      if (resolved) {
+        testChar = displayChar;
+        testPinyin = lookupCompoundPinyin(displayChar, word.pinyin);
+        testMeaning = resolved;
+      } else {
+        // No compound meaning available anywhere → test the single character
+        // with its own meaning (consistent, no compound/meaning mismatch).
         testChar = word.character;
         testPinyin = word.pinyin;
         testMeaning = word.english;

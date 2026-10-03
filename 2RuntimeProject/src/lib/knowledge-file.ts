@@ -145,6 +145,14 @@ export async function bulkUpdate(
       if (update.nextDueDate !== undefined) {
         records[existingIndex].nextDueDate = update.nextDueDate;
       }
+      // Compound context: the caller sends the newest compound this lesson, or
+      // carries forward the previous one; write it when present.
+      if (update.compoundWord) {
+        records[existingIndex].compoundWord = update.compoundWord;
+      }
+      if (update.compoundMeaning) {
+        records[existingIndex].compoundMeaning = update.compoundMeaning;
+      }
     } else {
       const newRecord: KnowledgeRecord = {
         studentId,
@@ -162,6 +170,12 @@ export async function bulkUpdate(
       }
       if (update.nextDueDate !== undefined) {
         newRecord.nextDueDate = update.nextDueDate;
+      }
+      if (update.compoundWord) {
+        newRecord.compoundWord = update.compoundWord;
+      }
+      if (update.compoundMeaning) {
+        newRecord.compoundMeaning = update.compoundMeaning;
       }
       records.push(newRecord);
     }

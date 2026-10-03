@@ -181,7 +181,10 @@ export async function bulkUpdate(
     if (update.nextDueDate !== undefined) {
       row.next_due_date = update.nextDueDate;
     }
-    // Only save compound context when first learning (don't overwrite existing)
+    // Compound context is set by the caller: it holds the newest compound this
+    // lesson, or the carried-forward previous compound. When present we write
+    // it; the caller is responsible for preserving the prior value when there's
+    // no new compound this lesson.
     if (update.compoundWord) {
       row.compound_word = update.compoundWord;
     }

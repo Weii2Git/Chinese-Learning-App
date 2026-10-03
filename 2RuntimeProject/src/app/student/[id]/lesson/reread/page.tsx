@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useLessonContext } from "@/lib/lesson-context";
 import { StoryDisplay } from "@/components/StoryDisplay";
 import { QuestionCard } from "@/components/QuestionCard";
-import { buildTest } from "@/lib/question-generator";
+import { buildTest, findCompoundsNeedingMeaning } from "@/lib/question-generator";
 import { QUESTION_TIMER_MS } from "@/lib/constants";
 import type { ComprehensionQuestion, Question, QuestionResult, Word } from "@/lib/types";
 
@@ -74,7 +74,30 @@ export default function RereadPage() {
       const otherWords = allWords.filter((w) => !incorrectIds.has(w.id));
       const reorderedNew = [...incorrectVocabWords, ...otherWords.filter((w) => lessonState.newWords.some((nw) => nw.id === w.id))];
       const reorderedReview = otherWords.filter((w) => lessonState.reviewWords.some((rw) => rw.id === w.id));
-      const allRetestQuestions = buildTest(reorderedNew, reorderedReview, comprehensionQs, lessonState.segmentedStory, lessonState.wordMeanings, undefined, undefined, vocabCount, compCount);
+
+      // Gap-fill compound meanings the story generator may have omitted, so a
+      // compound is never retested with the bare single-character meaning.
+      const wordMeanings = { ...(lessonState.wordMeanings ?? {}) };
+      const needMeaning = findCompoundsNeedingMeaning(
+        reorderedNew, reorderedReview, lessonState.segmentedStory, wordMeanings
+      );
+      if (needMeaning.length > 0) {
+        try {
+          const mRes = await fetch("/api/word-meanings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ words: needMeaning }),
+          });
+          if (mRes.ok) {
+            const { meanings } = (await mRes.json()) as { meanings: Record<string, string> };
+            Object.assign(wordMeanings, meanings);
+          }
+        } catch {
+          // Best-effort; buildTest falls back to the single character if still missing.
+        }
+      }
+
+      const allRetestQuestions = buildTest(reorderedNew, reorderedReview, comprehensionQs, lessonState.segmentedStory, wordMeanings, undefined, undefined, vocabCount, compCount);
       setRetestQuestions(allRetestQuestions);
       setCurrentIndex(0);
       setLoopAnswers([]);
