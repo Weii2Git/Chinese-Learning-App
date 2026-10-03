@@ -66,18 +66,37 @@ function mapRecordToRow(record: KnowledgeRecord): Record<string, unknown> {
 
 /**
  * Read all knowledge records from Supabase.
+ *
+ * PostgREST caps a single response at 1000 rows, so we page through with
+ * .range() until a short page is returned. Without this, any logic that reads
+ * all records (lesson word selection, counts, SRS review) would silently miss
+ * rows once the table grows beyond 1000, e.g. offering already-known words as
+ * "new".
  */
 export async function readKnowledgeRecords(): Promise<KnowledgeRecord[]> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('knowledge_records')
-    .select('*');
+  const PAGE_SIZE = 1000;
+  const all: KnowledgeRecord[] = [];
 
-  if (error) {
-    throw new Error(`readKnowledgeRecords failed: ${error.message}`);
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from('knowledge_records')
+      .select('*')
+      .order('student_id', { ascending: true })
+      .order('word_id', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) {
+      throw new Error(`readKnowledgeRecords failed: ${error.message}`);
+    }
+
+    const page = data ?? [];
+    for (const row of page) all.push(mapRowToRecord(row));
+
+    if (page.length < PAGE_SIZE) break;
   }
 
-  return (data ?? []).map(mapRowToRecord);
+  return all;
 }
 
 /**
