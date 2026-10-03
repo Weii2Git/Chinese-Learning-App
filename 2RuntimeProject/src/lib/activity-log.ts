@@ -38,23 +38,40 @@ export async function getActivityLog(
   if (!isSupabaseConfigured()) return [];
 
   const supabase = getSupabaseClient();
-  let query = supabase
-    .from("lesson_activity_log")
-    .select("*")
-    .eq("student_id", studentId)
-    .order("activity_date", { ascending: false });
+  const PAGE_SIZE = 1000;
+  const rows: Array<Record<string, unknown>> = [];
 
-  if (fromDate) query = query.gte("activity_date", fromDate);
-  if (toDate) query = query.lte("activity_date", toDate);
+  // PostgREST caps a single response at 1000 rows, so page through with
+  // .range() until a short page is returned. The id tiebreaker keeps the
+  // ordering stable across pages (dates can repeat within a day).
+  for (let from = 0; ; from += PAGE_SIZE) {
+    let query = supabase
+      .from("lesson_activity_log")
+      .select("*")
+      .eq("student_id", studentId)
+      .order("activity_date", { ascending: false })
+      .order("id", { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
 
-  const { data, error } = await query;
-  if (error || !data) return [];
+    if (fromDate) query = query.gte("activity_date", fromDate);
+    if (toDate) query = query.lte("activity_date", toDate);
 
-  return data.map((r) => ({
-    id: r.id,
-    studentId: r.student_id,
-    activityDate: r.activity_date,
-    activityType: r.activity_type,
-    notes: r.notes ?? undefined,
-  }));
+    const { data, error } = await query;
+    if (error || !data) return []; // preserve all-or-nothing contract on error
+
+    rows.push(...data);
+    if (data.length < PAGE_SIZE) break;
+  }
+
+  return rows.map(toEntry);
+}
+
+function toEntry(r: Record<string, unknown>): ActivityLogEntry {
+  return {
+    id: r.id as string,
+    studentId: r.student_id as string,
+    activityDate: r.activity_date as string,
+    activityType: r.activity_type as ActivityLogEntry["activityType"],
+    notes: (r.notes as string | null) ?? undefined,
+  };
 }
