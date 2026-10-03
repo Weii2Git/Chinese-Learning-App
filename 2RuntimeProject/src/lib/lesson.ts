@@ -9,7 +9,7 @@ import { readKnowledgeRecords, bulkUpdate } from "./knowledge";
 import { getStudent, updateStudent, checkAndAdvanceLevel } from "./student";
 import { updateStreakStars } from "./stars";
 import { getWordsForLevel, getAllWords } from "./word-list";
-import { prioritizeReviewWords, countOverdue, advanceInterval, resetInterval } from "./srs";
+import { prioritizeReviewWords, countOverdue, advanceInterval, resetInterval, isRetired } from "./srs";
 import { appendStarLog } from "@/app/api/admin/adjust-stars/route";
 import { getAppSettings } from "@/app/api/admin/settings/route";
 import type {
@@ -139,9 +139,13 @@ export async function selectWordsForLesson(
       ...newWords.map((w) => w.id),
       ...reviewWords.map((w) => w.id),
     ]);
+    // Don't pull retired (mastered) words back into review as filler.
+    const retiredIds = new Set(
+      studentRecords.filter((r) => isRetired(r.intervalStage)).map((r) => r.wordId)
+    );
 
     const fillCandidates = currentLevelWords.filter(
-      (w) => !selectedIds.has(w.id)
+      (w) => !selectedIds.has(w.id) && !retiredIds.has(w.id)
     );
 
     const slotsToFill = reviewLimit - reviewWords.length;

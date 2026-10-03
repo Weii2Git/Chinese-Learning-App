@@ -1,8 +1,16 @@
-import { SRS_INTERVALS_MS, SRS_MAX_STAGE, SRS_INITIAL_STAGE } from "./constants";
+import { SRS_INTERVALS_MS, SRS_MAX_STAGE, SRS_INITIAL_STAGE, SRS_RETIRED_STAGE } from "./constants";
 import type { KnowledgeRecord } from "./types";
 
 /**
- * Clamp an interval stage to the valid range [1, SRS_MAX_STAGE].
+ * A retired word (reached SRS_RETIRED_STAGE) is considered mastered and is no
+ * longer scheduled for review.
+ */
+export function isRetired(stage: number | undefined): boolean {
+  return (stage ?? 0) >= SRS_RETIRED_STAGE;
+}
+
+/**
+ * Clamp an interval stage to the valid active range [1, SRS_MAX_STAGE].
  */
 function clampStage(stage: number): number {
   return Math.max(SRS_INITIAL_STAGE, Math.min(SRS_MAX_STAGE, stage));
@@ -11,10 +19,16 @@ function clampStage(stage: number): number {
 /**
  * Calculate the next due date given an interval stage and a reference timestamp.
  * Returns an ISO string of fromTimestamp + SRS_INTERVALS_MS[stage] milliseconds.
+ * Retired words have no real due date; we return a far-future date as a sentinel.
  */
 export function calculateDueDate(intervalStage: number, fromTimestamp: string): string {
-  const clamped = clampStage(intervalStage);
   const fromMs = new Date(fromTimestamp).getTime();
+  if (isRetired(intervalStage)) {
+    // ~100 years out — effectively never due (retired words are also filtered
+    // out of review selection, so this is just a safe sentinel).
+    return new Date(fromMs + 100 * 365 * 24 * 60 * 60 * 1000).toISOString();
+  }
+  const clamped = clampStage(intervalStage);
   const dueMs = fromMs + SRS_INTERVALS_MS[clamped];
   return new Date(dueMs).toISOString();
 }
@@ -70,13 +84,23 @@ export function getOverdueMs(record: KnowledgeRecord, now: string): number {
 
 /**
  * Advance the interval stage after a correct answer.
- * Returns updated SRS fields with min(stage+1, SRS_MAX_STAGE).
+ * Each correct answer moves up one stage. A correct answer at the top active
+ * stage (SRS_MAX_STAGE) retires the word (SRS_RETIRED_STAGE) so it is no longer
+ * scheduled for review. Already-retired words stay retired.
  */
 export function advanceInterval(
   currentStage: number,
   now: string
 ): { intervalStage: number; lastReviewedAt: string; nextDueDate: string } {
-  const nextStage = Math.min(clampStage(currentStage) + 1, SRS_MAX_STAGE);
+  let nextStage: number;
+  if (isRetired(currentStage)) {
+    nextStage = SRS_RETIRED_STAGE;
+  } else if (currentStage >= SRS_MAX_STAGE) {
+    // Correct at the final active stage → retire.
+    nextStage = SRS_RETIRED_STAGE;
+  } else {
+    nextStage = clampStage(currentStage) + 1;
+  }
   return {
     intervalStage: nextStage,
     lastReviewedAt: now,
@@ -111,8 +135,9 @@ export function prioritizeReviewWords(
   now: string,
   limit: number
 ): KnowledgeRecord[] {
-  // Any introduced word is reviewable (known or don't know).
-  const reviewable = records;
+  // Any introduced word is reviewable (known or don't know) EXCEPT retired
+  // (mastered) words, which have graduated out of the review cycle.
+  const reviewable = records.filter((r) => !isRetired(r.intervalStage));
 
   // Sort by overdue amount descending (most overdue first)
   const sorted = [...reviewable].sort((a, b) => {
@@ -125,8 +150,8 @@ export function prioritizeReviewWords(
 }
 
 /**
- * Count how many records are currently overdue.
+ * Count how many records are currently overdue (excluding retired words).
  */
 export function countOverdue(records: KnowledgeRecord[], now: string): number {
-  return records.filter((r) => isDue(r, now)).length;
+  return records.filter((r) => !isRetired(r.intervalStage) && isDue(r, now)).length;
 }

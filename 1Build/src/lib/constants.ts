@@ -33,10 +33,16 @@ export const SRS_INTERVALS_MS: Record<number, number> = {
   3: 7 * 24 * 60 * 60 * 1000,   // 7 days
   4: 30 * 24 * 60 * 60 * 1000,  // 30 days
   5: 90 * 24 * 60 * 60 * 1000,  // 90 days
+  6: 120 * 24 * 60 * 60 * 1000, // 120 days
+  7: 180 * 24 * 60 * 60 * 1000, // 180 days
+  8: 270 * 24 * 60 * 60 * 1000, // 270 days
 };
 
-export const SRS_MAX_STAGE = 5;
 export const SRS_INITIAL_STAGE = 1;
+// Highest active review stage. A correct answer at this stage retires the word.
+export const SRS_MAX_STAGE = 8;
+// Sentinel stage for a "mastered / retired" word: never selected for review again.
+export const SRS_RETIRED_STAGE = 9;
 
 export const DATA_DIR = "data";
 export const ENRICHED_WORDS_CACHE_FILE = "data/enriched-words.json";
