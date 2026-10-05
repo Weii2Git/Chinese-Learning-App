@@ -14,7 +14,7 @@ type TestPhase = "loading" | "ready" | "error";
 export default function TestPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { lessonState, setQuestions, addResult, markNewRoundStart, addLookedUpWord } = useLessonContext();
+  const { lessonState, setQuestions, addResult, markNewRoundStart, addLookedUpWord, addWordMeaning } = useLessonContext();
 
   const [phase, setPhase] = useState<TestPhase>("loading");
   const [error, setError] = useState<string | null>(null);
@@ -204,6 +204,7 @@ export default function TestPage() {
           requireConfirm
           onConfirm={handleConfirm}
           onWordLookup={addLookedUpWord}
+          onMeaningResolved={addWordMeaning}
           wordMeanings={lessonState?.wordMeanings}
         />
       </div>

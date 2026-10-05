@@ -23,7 +23,7 @@ function shuffle<T>(arr: T[]): T[] {
 export default function RereadPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { lessonState, incrementComprehensionLoop, addResult, markNewRoundStart, addLookedUpWord } = useLessonContext();
+  const { lessonState, incrementComprehensionLoop, addResult, markNewRoundStart, addLookedUpWord, addWordMeaning } = useLessonContext();
 
   const [phase, setPhase] = useState<Phase>("reread");
   const [error, setError] = useState<string | null>(null);
@@ -230,7 +230,7 @@ export default function RereadPage() {
           </div>
         </div>
 
-        <QuestionCard key={questionKey} question={currentQuestion} timerMs={QUESTION_TIMER_MS} onAnswer={handleAnswer} requireConfirm onConfirm={handleConfirm} onWordLookup={addLookedUpWord} wordMeanings={lessonState.wordMeanings} />
+        <QuestionCard key={questionKey} question={currentQuestion} timerMs={QUESTION_TIMER_MS} onAnswer={handleAnswer} requireConfirm onConfirm={handleConfirm} onWordLookup={addLookedUpWord} onMeaningResolved={addWordMeaning} wordMeanings={lessonState.wordMeanings} />
       </div>
     </div>
   );

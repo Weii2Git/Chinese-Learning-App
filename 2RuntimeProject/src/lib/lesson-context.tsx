@@ -20,6 +20,7 @@ interface LessonContextValue {
   setStudentId: (studentId: string) => void;
   incrementComprehensionLoop: () => void;
   addLookedUpWord: (word: string) => void;
+  addWordMeaning: (word: string, meaning: string) => void;
   resetLesson: () => void;
   initLesson: (studentId: string) => void;
   markNewRoundStart: () => void;
@@ -124,6 +125,19 @@ export function LessonProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // Store a looked-up word's meaning into wordMeanings so the test builder can
+  // turn even brand-new tapped words into review questions. Does not overwrite
+  // an existing (e.g. story-provided) meaning.
+  const addWordMeaning = useCallback((word: string, meaning: string) => {
+    const trimmed = (meaning ?? "").trim();
+    if (!word || !trimmed) return;
+    setLessonState((prev) => {
+      if (!prev) return prev;
+      if (prev.wordMeanings[word]) return prev; // keep existing meaning
+      return { ...prev, wordMeanings: { ...prev.wordMeanings, [word]: trimmed } };
+    });
+  }, []);
+
   const markNewRoundStart = useCallback(() => {
     setLessonState((prev) => {
       if (!prev) return prev;
@@ -164,6 +178,7 @@ export function LessonProvider({ children }: { children: React.ReactNode }) {
     setStudentId,
     incrementComprehensionLoop,
     addLookedUpWord,
+    addWordMeaning,
     resetLesson,
     initLesson,
     markNewRoundStart,

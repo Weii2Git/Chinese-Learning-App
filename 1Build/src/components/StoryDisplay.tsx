@@ -10,10 +10,11 @@ interface StoryDisplayProps {
   newWords: Word[];
   allWords: Word[];
   onWordLookup?: (word: string) => void;
+  onMeaningResolved?: (word: string, meaning: string) => void;
   wordMeanings?: Record<string, string>;
 }
 
-export function StoryDisplay({ story, segmentedStory, newWords, onWordLookup, wordMeanings }: StoryDisplayProps) {
+export function StoryDisplay({ story, segmentedStory, newWords, onWordLookup, onMeaningResolved, wordMeanings }: StoryDisplayProps) {
   const [popup, setPopup] = useState<{ text: string; position: { x: number; y: number } } | null>(null);
 
   const newWordChars = useMemo(() => new Set(newWords.map((w) => w.character)), [newWords]);
@@ -93,6 +94,7 @@ export function StoryDisplay({ story, segmentedStory, newWords, onWordLookup, wo
           position={popup.position}
           onClose={() => setPopup(null)}
           wordMeanings={wordMeanings}
+          onMeaningResolved={onMeaningResolved}
         />
       )}
     </div>

@@ -8,6 +8,8 @@ interface ClickableChineseProps {
   text: string;
   /** Called with each word the user taps, so it can be recorded for review. */
   onWordLookup?: (word: string) => void;
+  /** Called with a tapped word's resolved meaning, so it can be stored. */
+  onMeaningResolved?: (word: string, meaning: string) => void;
   /** Optional local meaning cache passed through to the popup. */
   wordMeanings?: Record<string, string>;
   /** Optional className for the wrapping text element. */
@@ -54,7 +56,7 @@ function useSegments(text: string): string[] {
  * be added to the student's review list. Non-Chinese segments (punctuation,
  * spaces) render as plain text.
  */
-export function ClickableChinese({ text, onWordLookup, wordMeanings, className }: ClickableChineseProps) {
+export function ClickableChinese({ text, onWordLookup, onMeaningResolved, wordMeanings, className }: ClickableChineseProps) {
   const [popup, setPopup] = useState<{ text: string; position: { x: number; y: number } } | null>(null);
   const segments = useSegments(text);
 
@@ -90,6 +92,7 @@ export function ClickableChinese({ text, onWordLookup, wordMeanings, className }
           position={popup.position}
           onClose={() => setPopup(null)}
           wordMeanings={wordMeanings}
+          onMeaningResolved={onMeaningResolved}
         />
       )}
     </>

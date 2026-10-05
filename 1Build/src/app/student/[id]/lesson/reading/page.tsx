@@ -13,7 +13,7 @@ type PagePhase = "init" | "loading-words" | "loading-story" | "done" | "error";
 export default function ReadingPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { lessonState, initLesson, setWords, setStory, resetLesson, addLookedUpWord } = useLessonContext();
+  const { lessonState, initLesson, setWords, setStory, resetLesson, addLookedUpWord, addWordMeaning } = useLessonContext();
 
   const [phase, setPhase] = useState<PagePhase>("init");
   const [error, setError] = useState<string | null>(null);
@@ -137,6 +137,7 @@ export default function ReadingPage() {
           newWords={lessonState?.newWords || []}
           allWords={allWords}
           onWordLookup={addLookedUpWord}
+          onMeaningResolved={addWordMeaning}
           wordMeanings={lessonState?.wordMeanings}
         />
 

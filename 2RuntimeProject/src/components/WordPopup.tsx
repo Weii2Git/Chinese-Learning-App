@@ -7,9 +7,11 @@ interface WordPopupProps {
   position: { x: number; y: number };
   onClose: () => void;
   wordMeanings?: Record<string, string>;
+  /** Called with the resolved English meaning once known (cache or fetch). */
+  onMeaningResolved?: (word: string, meaning: string) => void;
 }
 
-export function WordPopup({ text, position, onClose, wordMeanings }: WordPopupProps) {
+export function WordPopup({ text, position, onClose, wordMeanings, onMeaningResolved }: WordPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
   const [pinyin, setPinyin] = useState<string | null>(null);
   const [english, setEnglish] = useState<string | null>(null);
@@ -47,13 +49,19 @@ export function WordPopup({ text, position, onClose, wordMeanings }: WordPopupPr
     const localMeaning = wordMeanings?.[text];
     if (localMeaning) {
       setEnglish(localMeaning);
+      onMeaningResolved?.(text, localMeaning);
     } else {
       fetch(`/api/words/lookup?text=${encodeURIComponent(text)}`)
         .then((res) => res.json())
-        .then((data) => setEnglish(data.english || "—"))
+        .then((data) => {
+          const meaning = data.english || "—";
+          setEnglish(meaning);
+          // Only report a real meaning (not the placeholder) for storage.
+          if (data.english) onMeaningResolved?.(text, data.english);
+        })
         .catch(() => setEnglish("—"));
     }
-  }, [text, wordMeanings]);
+  }, [text, wordMeanings, onMeaningResolved]);
 
   const hasSpeechSynthesis = typeof window !== "undefined" && "speechSynthesis" in window;
 

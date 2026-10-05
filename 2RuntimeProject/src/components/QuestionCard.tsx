@@ -12,10 +12,11 @@ interface QuestionCardProps {
   onConfirm?: () => void;
   /** When provided, comprehension question text becomes tappable word-by-word. */
   onWordLookup?: (word: string) => void;
+  onMeaningResolved?: (word: string, meaning: string) => void;
   wordMeanings?: Record<string, string>;
 }
 
-export function QuestionCard({ question, onAnswer, onConfirm, onWordLookup, wordMeanings }: QuestionCardProps) {
+export function QuestionCard({ question, onAnswer, onConfirm, onWordLookup, onMeaningResolved, wordMeanings }: QuestionCardProps) {
   const [selectedPinyin, setSelectedPinyin] = useState<string | null>(null);
   const [selectedMeaning, setSelectedMeaning] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
@@ -179,6 +180,7 @@ export function QuestionCard({ question, onAnswer, onConfirm, onWordLookup, word
           <ClickableChinese
             text={question.data.question}
             onWordLookup={onWordLookup}
+            onMeaningResolved={onMeaningResolved}
             wordMeanings={wordMeanings}
             className="text-lg text-slate-200 leading-relaxed"
           />
