@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import type { Question } from "@/lib/types";
+import { ClickableChinese } from "./ClickableChinese";
 
 interface QuestionCardProps {
   question: Question;
@@ -9,9 +10,12 @@ interface QuestionCardProps {
   onAnswer: (selectedAnswer: string | null) => void;
   requireConfirm?: boolean;
   onConfirm?: () => void;
+  /** When provided, comprehension question text becomes tappable word-by-word. */
+  onWordLookup?: (word: string) => void;
+  wordMeanings?: Record<string, string>;
 }
 
-export function QuestionCard({ question, onAnswer, onConfirm }: QuestionCardProps) {
+export function QuestionCard({ question, onAnswer, onConfirm, onWordLookup, wordMeanings }: QuestionCardProps) {
   const [selectedPinyin, setSelectedPinyin] = useState<string | null>(null);
   const [selectedMeaning, setSelectedMeaning] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
@@ -171,7 +175,19 @@ export function QuestionCard({ question, onAnswer, onConfirm }: QuestionCardProp
   return (
     <div className="w-full">
       <div className="mb-8 rounded-2xl bg-slate-900 border border-slate-800 p-6">
-        <p className="text-lg text-slate-200 leading-relaxed">{question.data.question}</p>
+        {onWordLookup ? (
+          <ClickableChinese
+            text={question.data.question}
+            onWordLookup={onWordLookup}
+            wordMeanings={wordMeanings}
+            className="text-lg text-slate-200 leading-relaxed"
+          />
+        ) : (
+          <p className="text-lg text-slate-200 leading-relaxed">{question.data.question}</p>
+        )}
+        {onWordLookup && (
+          <p className="mt-2 text-xs text-slate-500">Tap any word for pinyin, meaning &amp; pronunciation</p>
+        )}
       </div>
 
       <div className="flex flex-col gap-3">

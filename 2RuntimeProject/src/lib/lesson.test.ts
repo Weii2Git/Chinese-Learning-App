@@ -22,7 +22,6 @@ vi.mock("./student", () => ({
 
 vi.mock("./stars", () => ({
   updateStreakStars: vi.fn(),
-  awardPerformanceStars: vi.fn(),
 }));
 
 vi.mock("./word-list", () => ({
@@ -32,7 +31,7 @@ vi.mock("./word-list", () => ({
 
 import { readKnowledgeRecords, bulkUpdate } from "./knowledge";
 import { getStudent, updateStudent, checkAndAdvanceLevel } from "./student";
-import { updateStreakStars, awardPerformanceStars } from "./stars";
+import { updateStreakStars } from "./stars";
 import { getAllWords } from "./word-list";
 
 const mockReadKnowledgeRecords = readKnowledgeRecords as ReturnType<typeof vi.fn>;
@@ -41,7 +40,6 @@ const mockGetStudent = getStudent as ReturnType<typeof vi.fn>;
 const mockUpdateStudent = updateStudent as ReturnType<typeof vi.fn>;
 const mockCheckAndAdvanceLevel = checkAndAdvanceLevel as ReturnType<typeof vi.fn>;
 const mockUpdateStreakStars = updateStreakStars as ReturnType<typeof vi.fn>;
-const mockAwardPerformanceStars = awardPerformanceStars as ReturnType<typeof vi.fn>;
 const mockGetAllWords = getAllWords as ReturnType<typeof vi.fn>;
 
 function makeWord(id: string, level: string): Word {
@@ -212,6 +210,7 @@ describe("completeLessonAndUpdateState", () => {
     name: "Test",
     currentLevel: "1-a",
     streakStars: 2,
+    streakFreezes: 0,
     performanceStars: 10,
     lastActiveDate: "2024-01-01",
     lessonsCompleted: 5,
@@ -220,7 +219,6 @@ describe("completeLessonAndUpdateState", () => {
   it("classifies correct answers as known and wrong answers as don't know (time ignored)", async () => {
     mockGetStudent.mockResolvedValue(mockStudent);
     mockBulkUpdate.mockResolvedValue(undefined);
-    mockAwardPerformanceStars.mockResolvedValue(11);
     mockUpdateStreakStars.mockResolvedValue(3);
     mockUpdateStudent.mockResolvedValue(mockStudent);
     mockCheckAndAdvanceLevel.mockResolvedValue({ advanced: false });
@@ -247,7 +245,6 @@ describe("completeLessonAndUpdateState", () => {
     mockGetStudent.mockResolvedValue(mockStudent);
     mockReadKnowledgeRecords.mockResolvedValue([]);
     mockBulkUpdate.mockResolvedValue(undefined);
-    mockAwardPerformanceStars.mockResolvedValue(11);
     mockUpdateStreakStars.mockResolvedValue(3);
     mockUpdateStudent.mockResolvedValue(mockStudent);
     mockCheckAndAdvanceLevel.mockResolvedValue({ advanced: false });
@@ -280,7 +277,6 @@ describe("completeLessonAndUpdateState", () => {
     mockGetStudent.mockResolvedValue(mockStudent);
     mockReadKnowledgeRecords.mockResolvedValue([]);
     mockBulkUpdate.mockResolvedValue(undefined);
-    mockAwardPerformanceStars.mockResolvedValue(10);
     mockUpdateStreakStars.mockResolvedValue(3);
     mockUpdateStudent.mockResolvedValue(mockStudent);
     mockCheckAndAdvanceLevel.mockResolvedValue({ advanced: false });
@@ -297,7 +293,6 @@ describe("completeLessonAndUpdateState", () => {
     mockGetStudent.mockResolvedValue(mockStudent);
     mockReadKnowledgeRecords.mockResolvedValue([]);
     mockBulkUpdate.mockResolvedValue(undefined);
-    mockAwardPerformanceStars.mockResolvedValue(10);
     mockUpdateStreakStars.mockResolvedValue(3);
     mockUpdateStudent.mockResolvedValue(mockStudent);
     mockCheckAndAdvanceLevel.mockResolvedValue({
@@ -315,7 +310,6 @@ describe("completeLessonAndUpdateState", () => {
     mockGetStudent.mockResolvedValue(mockStudent);
     mockReadKnowledgeRecords.mockResolvedValue([]);
     mockBulkUpdate.mockResolvedValue(undefined);
-    mockAwardPerformanceStars.mockResolvedValue(10);
     mockUpdateStreakStars.mockResolvedValue(5);
     mockUpdateStudent.mockResolvedValue(mockStudent);
     mockCheckAndAdvanceLevel.mockResolvedValue({
