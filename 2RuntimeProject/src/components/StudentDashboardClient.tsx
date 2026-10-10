@@ -26,6 +26,7 @@ interface Props {
   studentId: string;
   studentName: string;
   lessonsCompleted: number;
+  lessonsThisWeek: number;
   streakStars: number;
   streakFreezes: number;
   performanceStars: number;
@@ -38,6 +39,7 @@ interface Props {
 export function StudentDashboardClient({
   studentId,
   lessonsCompleted,
+  lessonsThisWeek,
   streakStars,
   streakFreezes,
   performanceStars,
@@ -144,11 +146,15 @@ export function StudentDashboardClient({
       {/* Word Knowledge + Lessons row */}
       <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wide text-center mb-4">Progress</p>
-        {/* Lessons / Known boxes — equal height */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        {/* Lessons / This Week / Known boxes — equal height */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
           <div className="rounded-xl bg-slate-800 border border-slate-700 p-3 text-center flex flex-col items-center justify-center min-h-[72px]">
             <p className="text-2xl font-bold text-white">{lessonsCompleted}</p>
             <p className="text-xs text-slate-400 mt-0.5">Lessons</p>
+          </div>
+          <div className="rounded-xl bg-slate-800 border border-slate-700 p-3 text-center flex flex-col items-center justify-center min-h-[72px]">
+            <p className="text-2xl font-bold text-sky-400">{lessonsThisWeek}</p>
+            <p className="text-xs text-slate-400 mt-0.5">This Week</p>
           </div>
           <button
             onClick={openWords}

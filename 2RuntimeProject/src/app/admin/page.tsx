@@ -25,6 +25,14 @@ interface StudentWordData {
   nextReviewWords: WordInfo[];
 }
 
+interface WeeklyLessonRow {
+  id: string;
+  name: string;
+  currentLevel: string;
+  thisWeek: number;
+  prevWeek: number;
+}
+
 interface StarAdjustmentEntry {
   id: string;
   timestamp: string;
@@ -70,6 +78,10 @@ export default function AdminPage() {
   const [wordData, setWordData] = useState<StudentWordData | null>(null);
   const [loadingWords, setLoadingWords] = useState(false);
 
+  // Weekly lessons
+  const [weeklyRows, setWeeklyRows] = useState<WeeklyLessonRow[]>([]);
+  const [weeklyLoaded, setWeeklyLoaded] = useState(false);
+
   // Load students on mount
   useEffect(() => {
     fetch("/api/students").then((r) => r.json()).then(setStudents).catch(() => {});
@@ -83,6 +95,10 @@ export default function AdminPage() {
       setStarsPerCorrect(data.starsPerCorrect);
       setSettingsLoaded(true);
     }).catch(() => setSettingsLoaded(true));
+    fetch("/api/admin/weekly-lessons").then((r) => r.json()).then((data) => {
+      setWeeklyRows(data.students ?? []);
+      setWeeklyLoaded(true);
+    }).catch(() => setWeeklyLoaded(true));
   }, []);
 
   // Load per-student star log when student is selected
@@ -218,6 +234,39 @@ export default function AdminPage() {
           >
             🔒 Lock Admin
           </button>
+        </div>
+
+        {/* ── 0. WEEKLY LESSONS ── */}
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
+          <h1 className="text-lg font-bold text-white mb-1">📅 Weekly Lessons</h1>
+          <p className="text-slate-500 text-sm mb-5">Lessons completed per account (week starts Monday 00:00 SGT)</p>
+
+          {!weeklyLoaded && <p className="text-slate-500 text-xs text-center py-3">Loading...</p>}
+          {weeklyLoaded && weeklyRows.length === 0 && (
+            <p className="text-slate-600 text-xs text-center py-3">No data yet</p>
+          )}
+          {weeklyLoaded && weeklyRows.length > 0 && (
+            <div className="overflow-hidden rounded-xl border border-slate-800">
+              <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 bg-slate-800/60 px-4 py-2 text-xs font-semibold text-slate-400">
+                <span>Student</span>
+                <span className="text-right w-20">This Week</span>
+                <span className="text-right w-20">Last Week</span>
+              </div>
+              {weeklyRows.map((r) => (
+                <div
+                  key={r.id}
+                  className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-2.5 text-sm border-t border-slate-800 items-center"
+                >
+                  <span className="text-slate-200 truncate">
+                    {r.name}
+                    <span className="text-slate-600 text-xs ml-1.5">Lv {r.currentLevel}</span>
+                  </span>
+                  <span className="text-right w-20 font-bold text-sky-400">{r.thisWeek}</span>
+                  <span className="text-right w-20 text-slate-400">{r.prevWeek}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── 1. PERFORMANCE STARS ── */}

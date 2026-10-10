@@ -12,6 +12,7 @@ import { getWordsForLevel, getAllWords } from "./word-list";
 import { prioritizeReviewWords, countOverdue, advanceInterval, resetInterval, isRetired } from "./srs";
 import { appendStarLog } from "@/app/api/admin/adjust-stars/route";
 import { getAppSettings } from "@/app/api/admin/settings/route";
+import { appendLessonEvent } from "./lesson-events";
 import type {
   Word,
   WordSelection,
@@ -319,6 +320,10 @@ export async function completeLessonAndUpdateState(
     reason: logReason,
     source: "lesson",
   }).catch(() => {}); // don't block on logging
+
+  // Record a per-lesson event for weekly counts (non-blocking, separate from
+  // the day-granular lesson_activity_log used by the streak calendar).
+  appendLessonEvent(studentId).catch(() => {});
 
   // Check for level advancement
   const advanceResult = await checkAndAdvanceLevel(studentId);

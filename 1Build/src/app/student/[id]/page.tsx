@@ -4,6 +4,7 @@ import { getStudent } from "@/lib/student";
 import { getKnowledgeSummary } from "@/lib/knowledge";
 import { LevelBadge } from "@/components/LevelBadge";
 import { checkAndResetStreak } from "@/lib/stars";
+import { countLessonsThisWeek } from "@/lib/lesson-events";
 import { StudentDashboardClient } from "@/components/StudentDashboardClient";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,7 @@ export default async function StudentDashboardPage({
   const freshStudent = (await getStudent(id)) ?? student;
 
   const summary = await getKnowledgeSummary(freshStudent.id, freshStudent.currentLevel);
+  const lessonsThisWeek = await countLessonsThisWeek(freshStudent.id);
 
   const characterImg = PLAYER_IMAGES[freshStudent.name];
   const scale = PLAYER_SCALE[freshStudent.name] ?? 1;
@@ -93,6 +95,7 @@ export default async function StudentDashboardPage({
         studentId={freshStudent.id}
         studentName={freshStudent.name}
         lessonsCompleted={freshStudent.lessonsCompleted}
+        lessonsThisWeek={lessonsThisWeek}
         streakStars={freshStudent.streakStars}
         streakFreezes={freshStudent.streakFreezes ?? 0}
         performanceStars={freshStudent.performanceStars}
