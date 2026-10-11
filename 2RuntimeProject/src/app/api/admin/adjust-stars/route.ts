@@ -5,7 +5,7 @@ import { promises as fs } from "fs";
 import path from "path";
 
 const LOG_FILE = path.resolve(process.cwd(), "data/star-adjustments.json");
-export const MAX_LOG_PER_STUDENT = 25;
+export const MAX_LOG_PER_STUDENT = 30;
 
 export interface StarAdjustmentEntry {
   id: string;
