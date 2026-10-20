@@ -13,6 +13,8 @@ import { prioritizeReviewWords, countOverdue, advanceInterval, resetInterval, is
 import { appendStarLog } from "@/app/api/admin/adjust-stars/route";
 import { getAppSettings } from "@/app/api/admin/settings/route";
 import { appendLessonEvent } from "./lesson-events";
+import { sgtDateString } from "./week";
+import { getDailyBatch, saveDailyBatch } from "./daily-batch";
 import type {
   Word,
   WordSelection,
@@ -37,7 +39,8 @@ import type {
  */
 export async function selectWordsForLesson(
   studentId: string,
-  level: string
+  level: string,
+  options: { lockDailyBatch?: boolean } = {}
 ): Promise<WordSelection> {
   const currentLevelIndex = LEVELS.indexOf(level);
   if (currentLevelIndex === -1) {
@@ -88,7 +91,33 @@ export async function selectWordsForLesson(
     ...newWordCandidatesEarlierLevels,
   ];
 
+  // Default: the next NEW_WORDS_PER_LESSON never-introduced words, in order.
   let newWords: Word[] = allNewWordCandidates.slice(0, NEW_WORDS_PER_LESSON);
+
+  // Daily batch: when locking is on (real lesson flow), every lesson taken on
+  // the same calendar day (SGT) uses the SAME new words. The first lesson of a
+  // new day computes & stores the batch; later lessons that day reuse it.
+  if (options.lockDailyBatch) {
+    const today = sgtDateString();
+    const wordById = new Map(allWords.map((w) => [w.id, w]));
+    const saved = await getDailyBatch(studentId);
+
+    if (saved && saved.batchDate === today && saved.wordIds.length > 0) {
+      // Reuse today's batch. Resolve stored ids; drop any that no longer exist.
+      const reused = saved.wordIds
+        .map((id) => wordById.get(id))
+        .filter((w): w is Word => w !== undefined);
+      if (reused.length > 0) {
+        newWords = reused;
+      } else {
+        // Stored ids no longer resolve — fall back to a fresh batch and persist.
+        await saveDailyBatch(studentId, today, newWords.map((w) => w.id));
+      }
+    } else {
+      // New day (or no batch yet): persist the freshly computed batch.
+      await saveDailyBatch(studentId, today, newWords.map((w) => w.id));
+    }
+  }
 
   // Review words: every introduced word is reviewable (known or don't know),
   // prioritized by SRS.
@@ -155,9 +184,16 @@ export async function selectWordsForLesson(
   }
 
   // If total (new + review) is still less than target, increase new words to fill the gap
+  // If total (new + review) is still less than target, increase new words to
+  // fill the gap — but NOT when the daily batch is locked, since that must keep
+  // exactly today's fixed set of new words.
   const totalTarget = NEW_WORDS_PER_LESSON + reviewLimit;
   const totalSelected = newWords.length + reviewWords.length;
-  if (totalSelected < totalTarget && allNewWordCandidates.length > newWords.length) {
+  if (
+    !options.lockDailyBatch &&
+    totalSelected < totalTarget &&
+    allNewWordCandidates.length > newWords.length
+  ) {
     const extraNeeded = totalTarget - totalSelected;
     const extraNew = allNewWordCandidates
       .slice(newWords.length)

@@ -25,6 +25,10 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: "Student not found" }, { status: 404 });
   }
 
-  const selection = await selectWordsForLesson(studentId, student.currentLevel);
+  // Lock the day's new-word batch: all lessons this calendar day (SGT) use the
+  // same 5 new words.
+  const selection = await selectWordsForLesson(studentId, student.currentLevel, {
+    lockDailyBatch: true,
+  });
   return Response.json(selection);
 }

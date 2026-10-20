@@ -52,3 +52,12 @@ export function weekBoundaries(now: Date = new Date()): {
     nextWeekStartISO: nextWeek.toISOString(),
   };
 }
+
+/**
+ * The current calendar day in Singapore time as a "YYYY-MM-DD" string, matching
+ * the app's existing day logic (used e.g. for streaks). Used as the key for the
+ * daily new-word batch.
+ */
+export function sgtDateString(now: Date = new Date()): string {
+  return now.toLocaleDateString("en-CA", { timeZone: "Asia/Singapore" });
+}
