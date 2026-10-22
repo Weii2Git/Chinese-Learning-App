@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateCombinedQuestion, buildTest, findWordInStory, lookupCompoundPinyin } from "./question-generator";
+import { generateCombinedQuestion, buildTest, findWordInStory, lookupCompoundPinyin, meaningsOverlap } from "./question-generator";
 import type { Word, ComprehensionQuestion } from "./types";
 
 const sampleWords: Word[] = [
@@ -216,5 +216,55 @@ describe("buildTest", () => {
         expect(q.data.correctMeaning.length).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe("meaningsOverlap", () => {
+  it("treats a synonym-list that contains the correct term as overlapping", () => {
+    expect(meaningsOverlap("beautiful, pretty", "beautiful")).toBe(true);
+    expect(meaningsOverlap("beautiful", "beautiful, pretty")).toBe(true);
+    expect(meaningsOverlap("happy; glad", "happy")).toBe(true);
+  });
+
+  it("treats distinct meanings as not overlapping", () => {
+    expect(meaningsOverlap("beautiful", "ugly")).toBe(false);
+    expect(meaningsOverlap("happy; glad", "angry")).toBe(false);
+    expect(meaningsOverlap("run", "walk")).toBe(false);
+  });
+
+  it("ignores leading articles, 'to', and parenthetical notes", () => {
+    expect(meaningsOverlap("to run", "run")).toBe(true);
+    expect(meaningsOverlap("a teacher", "teacher")).toBe(true);
+    expect(meaningsOverlap("happy (adj.)", "happy")).toBe(true);
+  });
+
+  it("matches case-insensitively", () => {
+    expect(meaningsOverlap("Beautiful", "beautiful")).toBe(true);
+  });
+});
+
+describe("meaning distractor distinctness", () => {
+  const words: Word[] = [
+    { id: "漂亮", character: "漂亮", pinyin: "piào liang", english: "beautiful, pretty", level: "1-a" },
+    { id: "美丽", character: "美丽", pinyin: "měi lì", english: "beautiful", level: "1-a" },
+    { id: "好看", character: "好看", pinyin: "hǎo kàn", english: "pretty; good-looking", level: "1-a" },
+    { id: "高兴", character: "高兴", pinyin: "gāo xìng", english: "happy; glad", level: "1-a" },
+    { id: "生气", character: "生气", pinyin: "shēng qì", english: "angry", level: "1-a" },
+    { id: "大", character: "大", pinyin: "dà", english: "big", level: "1-a" },
+    { id: "小", character: "小", pinyin: "xiǎo", english: "small", level: "1-a" },
+  ];
+
+  it("never offers two meaning options that share a synonym", () => {
+    // 美丽 = "beautiful"; the pool includes 漂亮 "beautiful, pretty" and 好看
+    // "pretty; good-looking" — none of these may co-occur as options.
+    const q = generateCombinedQuestion(words[1], words, true, "美丽", "měi lì", "beautiful");
+    for (let i = 0; i < q.meaningOptions.length; i++) {
+      for (let j = i + 1; j < q.meaningOptions.length; j++) {
+        expect(meaningsOverlap(q.meaningOptions[i], q.meaningOptions[j])).toBe(false);
+      }
+    }
+    // And the correct meaning is present exactly once (as a distinct option).
+    const correctMatches = q.meaningOptions.filter((m) => meaningsOverlap(m, "beautiful"));
+    expect(correctMatches.length).toBe(1);
   });
 });

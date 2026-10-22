@@ -20,6 +20,35 @@ function shuffle<T>(array: T[]): T[] {
 }
 
 /**
+ * Split an English gloss into its individual synonym terms.
+ * Glosses are synonym lists separated by comma / semicolon / slash, e.g.
+ * "beautiful, pretty" or "happy; glad". Parenthetical notes and surrounding
+ * punctuation are stripped. Returns lowercased, trimmed, non-empty terms.
+ */
+function meaningTerms(meaning: string): string[] {
+  return meaning
+    .toLowerCase()
+    .replace(/\(.*?\)/g, " ") // drop parenthetical notes
+    .split(/[,;/]|\bor\b/) // comma, semicolon, slash, or the word "or"
+    .map((t) => t.replace(/^(to|a|an|the)\s+/i, "").trim()) // drop leading articles / "to"
+    .filter((t) => t.length > 0);
+}
+
+/**
+ * Two meanings "overlap" (are not safely distinct) if they share any synonym
+ * term. Used to stop a distractor like "beautiful, pretty" appearing alongside
+ * the correct answer "beautiful", which would make both read as correct.
+ */
+export function meaningsOverlap(a: string, b: string): boolean {
+  const termsA = new Set(meaningTerms(a));
+  if (termsA.size === 0) return a.trim().toLowerCase() === b.trim().toLowerCase();
+  for (const t of meaningTerms(b)) {
+    if (termsA.has(t)) return true;
+  }
+  return false;
+}
+
+/**
  * Look up the full pinyin for a compound word.
  * Uses pinyin-pro to generate pinyin for multi-character strings.
  * Falls back to the provided fallback if pinyin-pro returns empty.
@@ -191,16 +220,23 @@ export function generateCombinedQuestion(
   const pinyinOptions = shuffle([correctPinyin, ...pinyinDistractors]);
 
   // --- MEANING DISTRACTORS ---
+  // A distractor must be SEMANTICALLY DISTINCT from the correct meaning. English
+  // glosses here are synonym lists (e.g. "beautiful, pretty", "happy; glad"), so
+  // a plain string compare isn't enough: "beautiful" and "beautiful, pretty"
+  // would both read as correct. meaningsOverlap() rejects any distractor that
+  // shares a synonym term with the correct answer (or with another distractor).
+  const notOverlappingCorrect = (m: string) => !meaningsOverlap(m, correctMeaning);
+
   // Don't recycle meanings from other words in this test (use usedMeanings set)
   let meaningPool = allWords
     .filter((w) => w.id !== word.id)
     .map((w) => w.english)
-    .filter((e) => e && e.trim().length > 0 && e !== correctMeaning);
+    .filter((e) => e && e.trim().length > 0 && notOverlappingCorrect(e));
 
   // Also add meanings from compound dictionary for variety
   const compoundMeanings = Object.values(COMPOUND_WORD_MAP) as string[];
   for (const m of compoundMeanings) {
-    if (m !== correctMeaning && !meaningPool.includes(m)) {
+    if (notOverlappingCorrect(m) && !meaningPool.includes(m)) {
       meaningPool.push(m);
     }
   }
@@ -211,15 +247,25 @@ export function generateCombinedQuestion(
   }
 
   const uniqueMeaningPool = [...new Set(meaningPool)];
-  let meaningDistractors = shuffle([...uniqueMeaningPool]).slice(0, 3);
+
+  // Pick up to 3 distractors that don't overlap the correct answer OR each other,
+  // so no two options can read as the same meaning.
+  const meaningDistractors: string[] = [];
+  for (const candidate of shuffle([...uniqueMeaningPool])) {
+    if (meaningDistractors.length >= 3) break;
+    if (meaningDistractors.some((d) => meaningsOverlap(d, candidate))) continue;
+    meaningDistractors.push(candidate);
+  }
 
   // Ensure we always have exactly 3 distractors (4 options total)
   if (meaningDistractors.length < 3) {
     const fallbackMeanings = Object.values(COMPOUND_WORD_MAP) as string[];
-    const extraMeanings = fallbackMeanings.filter(
-      (m) => m !== correctMeaning && !meaningDistractors.includes(m)
-    );
-    meaningDistractors = [...meaningDistractors, ...shuffle(extraMeanings).slice(0, 3 - meaningDistractors.length)];
+    for (const m of shuffle(fallbackMeanings)) {
+      if (meaningDistractors.length >= 3) break;
+      if (!notOverlappingCorrect(m)) continue;
+      if (meaningDistractors.some((d) => meaningsOverlap(d, m))) continue;
+      meaningDistractors.push(m);
+    }
   }
 
   const meaningOptions = shuffle([correctMeaning, ...meaningDistractors].map((m) => m.toLowerCase()));
