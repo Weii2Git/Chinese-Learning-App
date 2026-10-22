@@ -54,6 +54,14 @@ export default function AdminPage() {
   const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // DeepSeek API key state (mirrors the Gemini key state above)
+  const [dsKey, setDsKey] = useState("");
+  const [dsStatus, setDsStatus] = useState<"loading" | "configured" | "not_configured">("loading");
+  const [dsMasked, setDsMasked] = useState<string | null>(null);
+  const [dsSaving, setDsSaving] = useState(false);
+  const [dsTesting, setDsTesting] = useState(false);
+  const [dsMessage, setDsMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   const [students, setStudents] = useState<StudentInfo[]>([]);
 
   // Star adjustment — student selection drives both the form and the log
@@ -69,6 +77,7 @@ export default function AdminPage() {
   const [vocabCount, setVocabCount] = useState(20);
   const [compCount, setCompCount] = useState(5);
   const [starsPerCorrect, setStarsPerCorrect] = useState(1);
+  const [llmProvider, setLlmProvider] = useState<"gemini" | "deepseek">("gemini");
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsMsg, setSettingsMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -89,10 +98,15 @@ export default function AdminPage() {
       if (data.configured) { setStatus("configured"); setMasked(data.masked); }
       else setStatus("not_configured");
     }).catch(() => setStatus("not_configured"));
+    fetch("/api/admin/deepseek-key").then((r) => r.json()).then((data) => {
+      if (data.configured) { setDsStatus("configured"); setDsMasked(data.masked); }
+      else setDsStatus("not_configured");
+    }).catch(() => setDsStatus("not_configured"));
     fetch("/api/admin/settings").then((r) => r.json()).then((data) => {
       setVocabCount(data.vocabQuestionsCount);
       setCompCount(data.comprehensionQuestionsCount);
       setStarsPerCorrect(data.starsPerCorrect);
+      if (data.llmProvider === "gemini" || data.llmProvider === "deepseek") setLlmProvider(data.llmProvider);
       setSettingsLoaded(true);
     }).catch(() => setSettingsLoaded(true));
     fetch("/api/admin/weekly-lessons").then((r) => r.json()).then((data) => {
@@ -167,7 +181,7 @@ export default function AdminPage() {
       const res = await fetch("/api/admin/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vocabQuestionsCount: vocabCount, comprehensionQuestionsCount: compCount, starsPerCorrect }),
+        body: JSON.stringify({ vocabQuestionsCount: vocabCount, comprehensionQuestionsCount: compCount, starsPerCorrect, llmProvider }),
       });
       if (!res.ok) throw new Error((await res.json()).error);
       setSettingsMsg({ type: "success", text: "Settings saved!" });
@@ -206,6 +220,38 @@ export default function AdminPage() {
       else setMessage({ type: "error", text: `Test failed: ${data.error}${data.hint ? `\n💡 ${data.hint}` : ""}` });
     } catch { setMessage({ type: "error", text: "Failed to test." }); }
     finally { setTesting(false); }
+  }
+
+  async function handleDsSave() {
+    if (!dsKey.trim()) { setDsMessage({ type: "error", text: "Please enter an API key." }); return; }
+    setDsSaving(true); setDsMessage(null);
+    try {
+      const res = await fetch("/api/admin/deepseek-key", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ apiKey: dsKey.trim() }) });
+      if (!res.ok) { const data = await res.json(); throw new Error(data.error || "Failed"); }
+      setDsStatus("configured"); setDsMasked(dsKey.slice(0, 6) + "..." + dsKey.slice(-4)); setDsKey("");
+      setDsMessage({ type: "success", text: "API key saved!" });
+    } catch (err: unknown) {
+      setDsMessage({ type: "error", text: err instanceof Error ? err.message : "Failed" });
+    } finally { setDsSaving(false); }
+  }
+
+  async function handleDsRemove() {
+    try {
+      await fetch("/api/admin/deepseek-key", { method: "DELETE" });
+      setDsStatus("not_configured"); setDsMasked(null);
+      setDsMessage({ type: "success", text: "API key removed." });
+    } catch { setDsMessage({ type: "error", text: "Failed to remove." }); }
+  }
+
+  async function handleDsTestKey() {
+    setDsTesting(true); setDsMessage(null);
+    try {
+      const res = await fetch("/api/admin/test-deepseek-key", { method: "POST" });
+      const data = await res.json();
+      if (data.success) setDsMessage({ type: "success", text: data.message });
+      else setDsMessage({ type: "error", text: `Test failed: ${data.error}${data.hint ? `\n💡 ${data.hint}` : ""}` });
+    } catch { setDsMessage({ type: "error", text: "Failed to test." }); }
+    finally { setDsTesting(false); }
   }
 
   async function handleLogout() {
@@ -476,7 +522,18 @@ export default function AdminPage() {
                   <input type="number" min="0" max="5" step="0.1" value={starsPerCorrect} onChange={(e) => setStarsPerCorrect(Number(e.target.value))}
                     className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white text-center focus:outline-none" />
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">AI Provider</label>
+                  <select value={llmProvider} onChange={(e) => setLlmProvider(e.target.value as "gemini" | "deepseek")}
+                    className="w-full rounded-lg bg-slate-800 border border-slate-700 focus:border-indigo-500 px-3 py-2 text-sm text-white focus:outline-none">
+                    <option value="gemini">Gemini</option>
+                    <option value="deepseek">DeepSeek</option>
+                  </select>
+                </div>
               </div>
+              <p className="text-xs text-slate-600">
+                Controls which AI generates stories, questions, and word meanings. Make sure the selected provider&apos;s API key is configured below.
+              </p>
 
               {settingsMsg && (
                 <p className={`text-xs ${settingsMsg.type === "success" ? "text-emerald-400" : "text-red-400"}`}>{settingsMsg.text}</p>
@@ -548,6 +605,70 @@ export default function AdminPage() {
             <ol className="list-decimal list-inside space-y-1">
               <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline">Google AI Studio</a></li>
               <li>Sign in with your Google account</li>
+              <li>Click &quot;Create API Key&quot;</li>
+              <li>Copy and paste it above</li>
+            </ol>
+          </div>
+        </div>
+
+        {/* ── 5. DEEPSEEK API SETUP ── */}
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-6">
+          <h2 className="text-lg font-bold text-white mb-1">🐋 DeepSeek API Setup</h2>
+          <p className="text-slate-500 text-sm mb-5">Configure your DeepSeek API key (used when AI Provider is set to DeepSeek)</p>
+
+          <div className="rounded-xl bg-slate-800 p-4 mb-5 flex items-center justify-between">
+            <span className="text-sm text-slate-400">Status</span>
+            {dsStatus === "loading" ? <span className="text-sm text-slate-500">Checking...</span>
+              : dsStatus === "configured" ? (
+                <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-400">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" /> Configured
+                  {dsMasked && <span className="text-slate-500 font-mono text-xs ml-1">{dsMasked}</span>}
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-sm font-medium text-red-400">
+                  <span className="w-2 h-2 rounded-full bg-red-400 inline-block" /> Not configured
+                </span>
+              )}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="deepseek-key" className="block text-sm font-medium text-slate-400 mb-1.5">
+              {dsStatus === "configured" ? "Replace API Key" : "Enter API Key"}
+            </label>
+            <input id="deepseek-key" type="password" value={dsKey}
+              onChange={(e) => setDsKey(e.target.value)}
+              placeholder="Paste your DeepSeek API key here"
+              className="w-full rounded-xl bg-slate-800 border border-slate-700 focus:border-indigo-500 px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-colors"
+              onKeyDown={(e) => { if (e.key === "Enter") handleDsSave(); }}
+            />
+          </div>
+
+          {dsMessage && (
+            <div className={`mb-4 rounded-xl px-4 py-3 text-sm whitespace-pre-wrap ${dsMessage.type === "success" ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-red-500/10 border border-red-500/20 text-red-400"}`}>
+              {dsMessage.text}
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <button onClick={handleDsSave} disabled={dsSaving || !dsKey.trim()} className="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-semibold text-white transition-colors">
+              {dsSaving ? "Saving..." : "Save Key"}
+            </button>
+            {dsStatus === "configured" && (
+              <button onClick={handleDsRemove} className="rounded-xl border border-slate-700 hover:border-red-500/50 hover:text-red-400 px-4 py-2.5 text-sm font-semibold text-slate-400 transition-colors">
+                Remove
+              </button>
+            )}
+          </div>
+          {dsStatus === "configured" && (
+            <button onClick={handleDsTestKey} disabled={dsTesting} className="w-full mt-3 rounded-xl border border-slate-700 hover:border-slate-500 px-4 py-2.5 text-sm font-semibold text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-40">
+              {dsTesting ? "Testing..." : "Test API Key"}
+            </button>
+          )}
+          <div className="mt-5 rounded-xl bg-slate-800 p-4 text-xs text-slate-500">
+            <p className="font-semibold text-slate-400 mb-1.5">How to get a DeepSeek API key:</p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>Go to <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline">DeepSeek Platform</a></li>
+              <li>Sign in and add account credit</li>
               <li>Click &quot;Create API Key&quot;</li>
               <li>Copy and paste it above</li>
             </ol>

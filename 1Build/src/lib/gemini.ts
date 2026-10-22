@@ -1,6 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
-import { readFileSync, existsSync } from "fs";
-import { resolve } from "path";
 import {
   STORY_MIN_CHARS,
   STORY_MAX_CHARS,
@@ -8,42 +5,8 @@ import {
   STORY_PROMPT_MAX_CHARS,
   COMPREHENSION_QUESTIONS_COUNT,
 } from "./constants";
+import { complete } from "./llm";
 import type { StoryParams, ComprehensionParams, ComprehensionQuestion } from "./types";
-
-const MODEL = "gemini-2.5-flash";
-
-// Generation config for speed optimization
-const GENERATION_CONFIG = {
-  thinkingConfig: { thinkingBudget: 0 },
-  maxOutputTokens: 4096,
-  temperature: 0.7,
-};
-
-/**
- * Read the API key saved via the admin page (data/gemini-key.json).
- */
-function readSavedApiKey(): string | null {
-  try {
-    const keyFile = resolve(/* turbopackIgnore: true */ process.cwd(), "data/gemini-key.json");
-    if (!existsSync(keyFile)) return null;
-    const content = readFileSync(keyFile, "utf-8");
-    const { apiKey } = JSON.parse(content);
-    return typeof apiKey === "string" && apiKey.length > 0 ? apiKey : null;
-  } catch {
-    return null;
-  }
-}
-
-function getClient(): GoogleGenAI {
-  // Try env var first, then fall back to admin-saved key file
-  const apiKey = process.env.GEMINI_API_KEY || readSavedApiKey();
-  if (!apiKey) {
-    throw new Error(
-      "Gemini API key not found. Go to /admin to configure your API key."
-    );
-  }
-  return new GoogleGenAI({ apiKey });
-}
 
 /**
  * Count the number of Chinese characters in a string.
@@ -290,41 +253,22 @@ function parseStoryResponse(text: string): StoryResult {
  * If validation fails, retries once automatically.
  */
 export async function generateStory(params: StoryParams): Promise<StoryResult> {
-  const client = getClient();
   const prompt = buildStoryPrompt(params);
 
   async function attemptGeneration(): Promise<StoryResult> {
     try {
-      const response = await client.models.generateContent({
-        model: MODEL,
-        contents: prompt,
-        config: GENERATION_CONFIG,
-      });
-
-      const text = response.text;
-      if (!text) {
-        throw new Error("Gemini API returned an empty response");
-      }
-
+      const text = await complete(prompt, { json: true });
       return parseStoryResponse(text);
     } catch (error: unknown) {
       if (isRateLimitError(error)) {
         await sleep(2000);
-        const retryResponse = await client.models.generateContent({
-          model: MODEL,
-          contents: prompt,
-          config: GENERATION_CONFIG,
-        });
-        const retryText = retryResponse.text;
-        if (!retryText) {
-          throw new Error("Gemini API returned an empty response after rate limit retry");
-        }
+        const retryText = await complete(prompt, { json: true });
         return parseStoryResponse(retryText);
       }
 
       if (isTimeoutError(error)) {
         throw new Error(
-          "Gemini API request timed out. Please check your network connection and try again."
+          "LLM request timed out. Please check your network connection and try again."
         );
       }
 
@@ -366,7 +310,6 @@ export async function generateStory(params: StoryParams): Promise<StoryResult> {
 export async function generateComprehensionQuestions(
   params: ComprehensionParams
 ): Promise<ComprehensionQuestion[]> {
-  const client = getClient();
   const target = params.count ?? COMPREHENSION_QUESTIONS_COUNT;
 
   // Generate for a specific request (prompt reflects params.count and any
@@ -377,37 +320,22 @@ export async function generateComprehensionQuestions(
   ): Promise<ComprehensionQuestion[]> {
     const prompt = buildComprehensionPrompt(reqParams);
     try {
-      const response = await client.models.generateContent({
-        model: MODEL,
-        contents: prompt,
-        config: GENERATION_CONFIG,
-      });
-
-      const text = response.text;
-      if (!text) {
-        throw new Error("Gemini API returned an empty response");
-      }
-
+      // Comprehension prompt returns a JSON array; DeepSeek's json_object mode
+      // requires an object, so leave JSON mode off here and rely on the parser
+      // (which already strips code fences and tolerates surrounding text).
+      const text = await complete(prompt);
       return parseComprehensionResponse(text, limit);
     } catch (error: unknown) {
       if (isRateLimitError(error)) {
         // Exponential backoff: wait 2 seconds then retry
         await sleep(2000);
-        const retryResponse = await client.models.generateContent({
-          model: MODEL,
-          contents: prompt,
-          config: GENERATION_CONFIG,
-        });
-        const retryText = retryResponse.text;
-        if (!retryText) {
-          throw new Error("Gemini API returned an empty response after rate limit retry");
-        }
+        const retryText = await complete(prompt);
         return parseComprehensionResponse(retryText, limit);
       }
 
       if (isTimeoutError(error)) {
         throw new Error(
-          "Gemini API request timed out. Please check your network connection and try again."
+          "LLM request timed out. Please check your network connection and try again."
         );
       }
 
@@ -426,7 +354,7 @@ export async function generateComprehensionQuestions(
       if (
         error instanceof Error &&
         !isTimeoutError(error) &&
-        !error.message.includes("GEMINI_API_KEY") &&
+        !error.message.includes("API key") &&
         !error.message.includes("rate limit")
       ) {
         return await attemptGeneration(reqParams, limit);
@@ -490,7 +418,6 @@ export async function generateWordMeanings(
   const unique = [...new Set(words.map((w) => w.trim()).filter((w) => w.length > 0))];
   if (unique.length === 0) return {};
 
-  const client = getClient();
   const prompt = `你是一位中文到英文的翻译专家。请把下面每个中文词语翻译成简短的英文含义（每个不超过6个英文单词）。
 
 词语：
@@ -502,12 +429,7 @@ ${unique.map((w) => `  "${w}": "English meaning"`).join(",\n")}
 }`;
 
   async function attempt(): Promise<Record<string, string>> {
-    const response = await client.models.generateContent({
-      model: MODEL,
-      contents: prompt,
-      config: GENERATION_CONFIG,
-    });
-    const text = response.text;
+    const text = await complete(prompt, { json: true });
     if (!text) return {};
     return parseWordMeanings(text, unique);
   }

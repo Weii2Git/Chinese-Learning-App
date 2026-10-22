@@ -1,8 +1,6 @@
 import { type NextRequest } from "next/server";
 import { lookupPinyin, lookupEnglish } from "@/lib/dictionary";
-import { GoogleGenAI } from "@google/genai";
-import { readFileSync, existsSync } from "fs";
-import { resolve } from "path";
+import { complete } from "@/lib/llm";
 
 /**
  * Common multi-character word translations.
@@ -173,9 +171,9 @@ export async function GET(request: NextRequest) {
     english = lookupEnglish(text);
   }
 
-  // If no English found and it's a multi-char word, ask Gemini
+  // If no English found and it's a multi-char word, ask the active LLM
   if (!english && text.length > 1) {
-    english = await translateWithGemini(text);
+    english = await translateWithLlm(text);
   }
 
   return Response.json({
@@ -185,33 +183,20 @@ export async function GET(request: NextRequest) {
   });
 }
 
-// Simple in-memory cache for Gemini translations to avoid repeated API calls
+// Simple in-memory cache for LLM translations to avoid repeated API calls
 const translationCache = new Map<string, string>();
 
-async function translateWithGemini(text: string): Promise<string> {
+async function translateWithLlm(text: string): Promise<string> {
   if (translationCache.has(text)) {
     return translationCache.get(text)!;
   }
 
   try {
-    let apiKey = process.env.GEMINI_API_KEY || null;
-    if (!apiKey) {
-      const keyFile = resolve(/* turbopackIgnore: true */ process.cwd(), "data/gemini-key.json");
-      if (existsSync(keyFile)) {
-        const content = readFileSync(keyFile, "utf-8");
-        const parsed = JSON.parse(content);
-        apiKey = parsed.apiKey || null;
-      }
-    }
-    if (!apiKey) return "";
-
-    const client = new GoogleGenAI({ apiKey });
-    const response = await client.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Translate this Chinese word to English. Reply with ONLY the English meaning/definition, not pinyin or romanization. If it is a proper noun or place name, give the English meaning of the characters. Keep it brief (1-5 words). Word: ${text}`,
-    });
-
-    const result = response.text?.trim() || "";
+    const result = (
+      await complete(
+        `Translate this Chinese word to English. Reply with ONLY the English meaning/definition, not pinyin or romanization. If it is a proper noun or place name, give the English meaning of the characters. Keep it brief (1-5 words). Word: ${text}`
+      )
+    ).trim();
     // Cache it for future lookups
     translationCache.set(text, result);
     return result;
