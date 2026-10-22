@@ -9,7 +9,7 @@ import { readKnowledgeRecords, bulkUpdate } from "./knowledge";
 import { getStudent, updateStudent, checkAndAdvanceLevel } from "./student";
 import { updateStreakStars } from "./stars";
 import { getWordsForLevel, getAllWords } from "./word-list";
-import { prioritizeReviewWords, countOverdue, advanceInterval, resetInterval, isRetired, isDue } from "./srs";
+import { prioritizeReviewWords, countOverdue, advanceInterval, resetInterval, isDue } from "./srs";
 import { appendStarLog } from "@/app/api/admin/adjust-stars/route";
 import { getAppSettings } from "@/app/api/admin/settings/route";
 import { appendLessonEvent } from "./lesson-events";
@@ -163,25 +163,12 @@ export async function selectWordsForLesson(
     })
     .filter((w): w is Word => w !== undefined);
 
-  // If fewer than needed review words, fill remaining slots from current level
-  if (reviewWords.length < reviewLimit) {
-    const selectedIds = new Set([
-      ...newWords.map((w) => w.id),
-      ...reviewWords.map((w) => w.id),
-    ]);
-    // Don't pull retired (mastered) words back into review as filler.
-    const retiredIds = new Set(
-      studentRecords.filter((r) => isRetired(r.intervalStage)).map((r) => r.wordId)
-    );
-
-    const fillCandidates = currentLevelWords.filter(
-      (w) => !selectedIds.has(w.id) && !retiredIds.has(w.id)
-    );
-
-    const slotsToFill = reviewLimit - reviewWords.length;
-    const fillWords = fillCandidates.slice(0, slotsToFill);
-    reviewWords = [...reviewWords, ...fillWords];
-  }
+  // NOTE: review words are now strictly the DUE ones (prioritizeReviewWords
+  // gates on due date). We intentionally do NOT pad the review list with
+  // arbitrary current-level words anymore — that re-tested not-yet-due words
+  // and inflated their SRS stage. Any shortfall is filled first by extra NEW
+  // words (below) and finally by incidental "probe" words drawn from the story
+  // at test-build time (see buildTest / probe-words.ts).
 
   // If total (new + review) is still less than target, increase new words to fill the gap
   // If total (new + review) is still less than target, increase new words to
@@ -256,6 +243,32 @@ export async function completeLessonAndUpdateState(
     //   correct → "known", wrong/unanswered → "don't know".
 
     const vocabData = result.question.data;
+
+    // Probe words (incidental story words used to fill a short lesson):
+    //  - Correct  → no-op: award the star but write NO knowledge record, so the
+    //    word is never enrolled just because the student already knew it.
+    //  - Wrong    → enroll into SRS as "don't know" at stage 1, so it comes back.
+    // A probe word only enrolls on the FIRST wrong answer; once it has a record
+    // it's a normal review word on later lessons (so `isProbe` is ignored then).
+    if (vocabData.isProbe && !knowledgeMap.has(vocabData.wordId)) {
+      if (result.isCorrect) {
+        correctCount++;
+        starsEarned += settings.starsPerCorrect;
+        continue; // no record written for a correct probe
+      }
+      // Wrong probe → create a "don't know" record and start the SRS cycle.
+      const srsFields = resetInterval(now);
+      knowledgeUpdates.push({
+        wordId: vocabData.wordId,
+        level: vocabData.wordId.includes(":") ? vocabData.wordId.split(":")[0] : student.currentLevel,
+        newState: "don't know",
+        intervalStage: srsFields.intervalStage,
+        lastReviewedAt: srsFields.lastReviewedAt,
+        nextDueDate: srsFields.nextDueDate,
+      });
+      continue;
+    }
+
     const existingRecord = knowledgeMap.get(vocabData.wordId);
     // Any word with an existing record is a review word (it has been
     // introduced before, whether it was known or not).

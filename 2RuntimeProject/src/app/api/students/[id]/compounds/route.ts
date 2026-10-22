@@ -17,21 +17,23 @@ export async function GET(
   }
 
   const supabase = getSupabaseClient();
+  // Return ALL of the student's records (word_id + SRS stage + any compound
+  // context). The test builder uses compound context to show review words in
+  // their original compound form, and uses interval_stage to avoid probing
+  // words the student already knows well.
   const { data, error } = await supabase
     .from("knowledge_records")
-    .select("word_id, compound_word, compound_meaning")
-    .eq("student_id", id)
-    .not("compound_word", "is", null);
+    .select("word_id, compound_word, compound_meaning, interval_stage")
+    .eq("student_id", id);
 
   if (error || !data) return NextResponse.json([]);
 
   return NextResponse.json(
-    data
-      .filter((r) => r.compound_word && r.compound_meaning)
-      .map((r) => ({
-        wordId: r.word_id,
-        compoundWord: r.compound_word,
-        compoundMeaning: r.compound_meaning,
-      }))
+    data.map((r) => ({
+      wordId: r.word_id,
+      compoundWord: r.compound_word ?? undefined,
+      compoundMeaning: r.compound_meaning ?? undefined,
+      intervalStage: r.interval_stage ?? undefined,
+    }))
   );
 }

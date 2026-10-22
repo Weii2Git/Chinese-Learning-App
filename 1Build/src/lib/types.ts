@@ -49,6 +49,11 @@ export interface VocabQuestion {
   meaningOptions: string[]; // 4 meaning choices
   options: string[]; // kept for compatibility (same as pinyinOptions)
   isNewWord: boolean;
+  // Probe questions are incidental words drawn from the story to fill a lesson
+  // when there aren't enough due reviews / new words. A correct probe answer is
+  // a no-op (no record written); a wrong one enrolls the word into SRS as
+  // "don't know". Normal new/review questions leave this undefined/false.
+  isProbe?: boolean;
 }
 
 export interface ComprehensionQuestion {

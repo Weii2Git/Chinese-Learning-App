@@ -6,6 +6,7 @@ import type {
 } from "./types";
 import { pinyin } from "pinyin-pro";
 import { lookupCompoundMeaning, COMPOUND_WORD_MAP } from "./compound-words";
+import { selectProbeWords } from "./probe-words";
 
 /**
  * Shuffle an array in place using Fisher-Yates algorithm.
@@ -309,7 +310,7 @@ export function buildTest(
   segmentedStory?: string,
   wordMeanings?: Record<string, string>,
   lookedUpWords?: string[],
-  knowledgeRecords?: Array<{ wordId: string; compoundWord?: string; compoundMeaning?: string }>,
+  knowledgeRecords?: Array<{ wordId: string; compoundWord?: string; compoundMeaning?: string; intervalStage?: number }>,
   vocabTarget?: number,
   comprehensionTarget?: number
 ): Question[] {
@@ -323,7 +324,7 @@ export function buildTest(
   // targetWordCount below.
   const selectionCap = Math.max(targetWordCount, allWords.length + (lookedUpWords?.length ?? 0));
 
-  const wordsToTest: { word: Word; isNew: boolean }[] = [];
+  const wordsToTest: { word: Word; isNew: boolean; isProbe?: boolean }[] = [];
   const addedIds = new Set<string>();
 
   // First: add looked-up words (these are words the user clicked during reading)
@@ -376,6 +377,36 @@ export function buildTest(
     }
   }
 
+  // Fourth: if new + review + lookups don't reach the vocab target, fill the
+  // remaining slots with incidental "probe" words drawn from the story (compound
+  // words only, filtered). A correct probe answer is a no-op; a wrong one enrolls
+  // the word into SRS. This replaces the old "pad with current-level words"
+  // backfill, which re-tested not-yet-due words.
+  if (wordsToTest.length < targetWordCount && segmentedStory) {
+    const excludeChars = new Set<string>();
+    for (const { word } of wordsToTest) {
+      excludeChars.add(word.character);
+      // Also exclude the compound form that would be shown for this word.
+      excludeChars.add(findWordInStory(word.character, segmentedStory));
+    }
+    const probeWords = selectProbeWords({
+      segmentedStory,
+      wordMeanings,
+      excludeIds: addedIds,
+      excludeChars,
+      knowledgeRecords,
+      level: newWords[0]?.level || reviewWords[0]?.level || "1-a",
+      count: targetWordCount - wordsToTest.length,
+    });
+    for (const word of probeWords) {
+      if (wordsToTest.length >= targetWordCount) break;
+      if (addedIds.has(word.id)) continue;
+      addedIds.add(word.id);
+      allWords.push(word); // add to pool for distractor generation
+      wordsToTest.push({ word, isNew: false, isProbe: true });
+    }
+  }
+
   // Generate one combined question per word
   const vocabQuestions: Question[] = [];
   const usedMeanings = new Set<string>();
@@ -391,7 +422,7 @@ export function buildTest(
     }
   }
 
-  for (const { word, isNew } of wordsToTest) {
+  for (const { word, isNew, isProbe } of wordsToTest) {
     // Stop once we've generated enough valid vocab questions.
     if (vocabQuestions.length >= targetWordCount) break;
 
@@ -451,13 +482,12 @@ export function buildTest(
     // Skip if we have no meaning (would produce an empty answer choice)
     if (!testMeaning || !testPinyin) continue;
 
-    vocabQuestions.push({
-      kind: "vocab" as const,
-      data: generateCombinedQuestion(
-        word, allWords, isNew, testChar, testPinyin, testMeaning,
-        usedMeanings, segmentedStory
-      ),
-    });
+    const vocabData = generateCombinedQuestion(
+      word, allWords, isNew, testChar, testPinyin, testMeaning,
+      usedMeanings, segmentedStory
+    );
+    if (isProbe) vocabData.isProbe = true;
+    vocabQuestions.push({ kind: "vocab" as const, data: vocabData });
   }
 
   const comprehensionWrapped: Question[] = comprehensionQuestions

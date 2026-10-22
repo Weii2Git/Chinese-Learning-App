@@ -124,14 +124,17 @@ describe("selectWordsForLesson", () => {
     ]);
   });
 
-  it("fills remaining review slots from current level when few words are introduced", async () => {
-    // 25 words at level 1-a: 3 introduced (known), rest never seen
+  it("reviews only the due records and no longer pads with current-level words", async () => {
+    // 25 words at level 1-a: 3 introduced (known, due — no SRS fields), rest new.
     const words: Word[] = [];
     for (let i = 0; i < 25; i++) {
       words.push(makeWord(`w${i}`, "1-a"));
     }
     mockGetAllWords.mockResolvedValue(words);
 
+    // Records with no SRS fields are treated as due (backward-compat), so they
+    // still appear as reviews; what must NOT happen is extra current-level
+    // words being appended to pad the review list.
     const knowledgeRecords: KnowledgeRecord[] = [
       { studentId: "s1", wordId: "w0", level: "1-a", state: "known", lastUpdated: "" },
       { studentId: "s1", wordId: "w1", level: "1-a", state: "known", lastUpdated: "" },
@@ -141,22 +144,34 @@ describe("selectWordsForLesson", () => {
 
     const result = await selectWordsForLesson("s1", "1-a");
 
-    // 5 new words: the next never-introduced in order (w3-w7)
-    expect(result.newWords.map((w) => w.id)).toEqual([
-      "w3",
-      "w4",
-      "w5",
-      "w6",
-      "w7",
-    ]);
-    // The 3 introduced records come first in the review list
-    expect(result.reviewWords.slice(0, 3).map((w) => w.id).sort()).toEqual([
-      "w0",
-      "w1",
-      "w2",
-    ]);
-    // Remaining review slots are filled from the current level
-    expect(result.reviewWords.length).toBeGreaterThan(3);
+    // Review list is exactly the 3 due records — no current-level padding.
+    expect(result.reviewWords.map((w) => w.id).sort()).toEqual(["w0", "w1", "w2"]);
+    // The shortfall is filled by extra NEW words instead (never-introduced).
+    expect(result.newWords.length).toBeGreaterThan(5);
+    expect(result.newWords.every((w) => !["w0", "w1", "w2"].includes(w.id))).toBe(true);
+  });
+
+  it("excludes not-yet-due review words from selection", async () => {
+    const words: Word[] = [];
+    for (let i = 0; i < 25; i++) words.push(makeWord(`w${i}`, "1-a"));
+    mockGetAllWords.mockResolvedValue(words);
+
+    const future = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
+    const pastReview = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString();
+    const pastDue = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const knowledgeRecords: KnowledgeRecord[] = [
+      // Due (next_due in the past) → should appear
+      { studentId: "s1", wordId: "w0", level: "1-a", state: "known", lastUpdated: pastReview, intervalStage: 3, lastReviewedAt: pastReview, nextDueDate: pastDue },
+      // Not due (next_due in the future) → should NOT appear
+      { studentId: "s1", wordId: "w1", level: "1-a", state: "known", lastUpdated: pastReview, intervalStage: 3, lastReviewedAt: pastReview, nextDueDate: future },
+    ];
+    mockReadKnowledgeRecords.mockResolvedValue(knowledgeRecords);
+
+    const result = await selectWordsForLesson("s1", "1-a");
+
+    expect(result.reviewWords.map((w) => w.id)).toContain("w0");
+    expect(result.reviewWords.map((w) => w.id)).not.toContain("w1");
   });
 
   it("prioritizes current level words over earlier level words for new words", async () => {
