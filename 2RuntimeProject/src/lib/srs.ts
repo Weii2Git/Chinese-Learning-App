@@ -135,9 +135,14 @@ export function prioritizeReviewWords(
   now: string,
   limit: number
 ): KnowledgeRecord[] {
-  // Any introduced word is reviewable (known or don't know) EXCEPT retired
-  // (mastered) words, which have graduated out of the review cycle.
-  const reviewable = records.filter((r) => !isRetired(r.intervalStage));
+  // Only words that are actually DUE are eligible for review. A word reviewed
+  // recently has a future due date and must wait until that date — pulling it
+  // in early would both over-test it and (previously) inflate its SRS stage.
+  // Retired (mastered) words are also excluded. Words not yet due simply aren't
+  // offered; the lesson builder fills any remaining slots separately.
+  const reviewable = records.filter(
+    (r) => !isRetired(r.intervalStage) && isDue(r, now)
+  );
 
   // Sort by overdue amount descending (most overdue first)
   const sorted = [...reviewable].sort((a, b) => {

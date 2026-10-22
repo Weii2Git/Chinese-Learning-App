@@ -9,7 +9,7 @@ import { readKnowledgeRecords, bulkUpdate } from "./knowledge";
 import { getStudent, updateStudent, checkAndAdvanceLevel } from "./student";
 import { updateStreakStars } from "./stars";
 import { getWordsForLevel, getAllWords } from "./word-list";
-import { prioritizeReviewWords, countOverdue, advanceInterval, resetInterval, isRetired } from "./srs";
+import { prioritizeReviewWords, countOverdue, advanceInterval, resetInterval, isRetired, isDue } from "./srs";
 import { appendStarLog } from "@/app/api/admin/adjust-stars/route";
 import { getAppSettings } from "@/app/api/admin/settings/route";
 import { appendLessonEvent } from "./lesson-events";
@@ -302,20 +302,19 @@ export async function completeLessonAndUpdateState(
     // reset to stage 1 so the word comes back soon and keeps being re-tested
     // until it is answered correctly.
     //
-    // "Once per day" guard: a word's SRS stage may only advance ONCE per
-    // calendar day (SGT). Because the daily new-word batch keeps teaching the
-    // same words across every lesson that day, a correct answer on a word
-    // already reviewed earlier today must NOT advance it again (that would
-    // inflate its interval stage with same-day repetitions). It still counts as
-    // "known"; only the SRS progression is held until the next day.
+    // "Advance only when due" guard: a correct answer advances the SRS stage
+    // ONLY if the word was actually due for review. If the word is tested early
+    // (before its next_due_date) — e.g. it reappears in the story, or is pulled
+    // in to fill a lesson — its stage and due date are held unchanged so it
+    // still comes back on its original due date. This prevents same-day and
+    // early-retest inflation. A brand-new word (no record yet) always advances
+    // on its first correct answer. This generalizes the earlier same-day guard.
     if (result.isCorrect) {
-      const alreadyReviewedToday =
-        isReviewWord &&
-        existingRecord.lastReviewedAt != null &&
-        sgtDateString(new Date(existingRecord.lastReviewedAt)) === sgtDateString(new Date(now));
+      const testedEarly =
+        isReviewWord && !isDue(existingRecord, now);
 
-      if (alreadyReviewedToday) {
-        // Hold the existing schedule — no second advance today.
+      if (testedEarly) {
+        // Hold the existing schedule — an early correct answer doesn't advance.
         update.intervalStage = existingRecord.intervalStage;
         update.lastReviewedAt = existingRecord.lastReviewedAt;
         update.nextDueDate = existingRecord.nextDueDate;

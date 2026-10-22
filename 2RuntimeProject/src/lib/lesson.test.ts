@@ -333,24 +333,26 @@ describe("completeLessonAndUpdateState", () => {
     ).rejects.toThrow("Student not found: nonexistent");
   });
 
-  it("does NOT advance the SRS stage again when a word was already reviewed earlier today", async () => {
+  it("does NOT advance the SRS stage when a correct word is tested early (not yet due)", async () => {
     mockGetStudent.mockResolvedValue(mockStudent);
     mockBulkUpdate.mockResolvedValue(undefined);
     mockUpdateStreakStars.mockResolvedValue(3);
     mockUpdateStudent.mockResolvedValue(mockStudent);
     mockCheckAndAdvanceLevel.mockResolvedValue({ advanced: false });
 
-    // Word already reviewed EARLIER TODAY (SGT) and sitting at stage 4.
-    const earlierTodaySgt = new Date();
+    // Word reviewed just now, due far in the future (stage 4). Testing it again
+    // now is "early" — the stage and due date must be held.
+    const now = new Date();
+    const futureDue = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     const existing: KnowledgeRecord = {
       studentId: "s1",
       wordId: "3-a:萝",
       level: "3-a",
       state: "known",
-      lastUpdated: earlierTodaySgt.toISOString(),
+      lastUpdated: now.toISOString(),
       intervalStage: 4,
-      lastReviewedAt: earlierTodaySgt.toISOString(),
-      nextDueDate: new Date(earlierTodaySgt.getTime() + 1000).toISOString(),
+      lastReviewedAt: now.toISOString(),
+      nextDueDate: futureDue.toISOString(),
     };
     mockReadKnowledgeRecords.mockResolvedValue([existing]);
 
@@ -361,9 +363,42 @@ describe("completeLessonAndUpdateState", () => {
     const update = outcome.knowledgeUpdates.find((u) => u.wordId === "3-a:萝");
     expect(update).toBeDefined();
     expect(update!.newState).toBe("known");
-    // Stage must stay at 4 — same-day repetition must not advance it.
+    // Stage stays at 4; due date unchanged so it returns on its original date.
     expect(update!.intervalStage).toBe(4);
     expect(update!.lastReviewedAt).toBe(existing.lastReviewedAt);
+    expect(update!.nextDueDate).toBe(existing.nextDueDate);
+  });
+
+  it("holds a looked-up word's schedule when re-tested early the same day", async () => {
+    mockGetStudent.mockResolvedValue(mockStudent);
+    mockBulkUpdate.mockResolvedValue(undefined);
+    mockUpdateStreakStars.mockResolvedValue(3);
+    mockUpdateStudent.mockResolvedValue(mockStudent);
+    mockCheckAndAdvanceLevel.mockResolvedValue({ advanced: false });
+
+    // A lookup word tested earlier today, next due tomorrow (stage 2). A second
+    // correct answer the same day must NOT advance it (the old inflation bug).
+    const now = new Date();
+    const dueTomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const existing: KnowledgeRecord = {
+      studentId: "s1",
+      wordId: "lookup:赶紧",
+      level: "lookup",
+      state: "known",
+      lastUpdated: now.toISOString(),
+      intervalStage: 2,
+      lastReviewedAt: now.toISOString(),
+      nextDueDate: dueTomorrow.toISOString(),
+    };
+    mockReadKnowledgeRecords.mockResolvedValue([existing]);
+
+    const outcome = await completeLessonAndUpdateState("s1", [
+      makeVocabResult("lookup:赶紧", true, 4000),
+    ]);
+
+    const update = outcome.knowledgeUpdates.find((u) => u.wordId === "lookup:赶紧");
+    expect(update).toBeDefined();
+    expect(update!.intervalStage).toBe(2);
     expect(update!.nextDueDate).toBe(existing.nextDueDate);
   });
 
