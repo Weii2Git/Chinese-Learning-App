@@ -1,179 +1,149 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { promises as fs } from "fs";
-import path from "path";
+import type { Student } from "./types";
+
+// Unit-test the streak logic in isolation. We mock the storage layer (./student
+// and ./activity-log) so the test never touches the filesystem or Supabase, and
+// we mock the clock so the Singapore-time "today"/"yesterday" used by stars.ts
+// are deterministic regardless of when/where the suite runs.
+
+vi.mock("./student", () => ({
+  getStudent: vi.fn(),
+  updateStudent: vi.fn(),
+}));
+
+vi.mock("./activity-log", () => ({
+  logActivity: vi.fn(),
+}));
+
 import { updateStreakStars } from "./stars";
-import { getAllStudents, getStudent } from "./student";
-import { STUDENTS_FILE } from "./constants";
+import { getStudent, updateStudent } from "./student";
 
-const studentsPath = path.resolve(process.cwd(), STUDENTS_FILE);
-const dataDir = path.dirname(studentsPath);
+const mockGetStudent = getStudent as ReturnType<typeof vi.fn>;
+const mockUpdateStudent = updateStudent as ReturnType<typeof vi.fn>;
 
-// Helper to format a Date as YYYY-MM-DD
-function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
+// A fixed instant: 2026-06-15 12:00 SGT (= 04:00 UTC). Comfortably mid-day in
+// Singapore so there's no date-boundary ambiguity between UTC and SGT.
+const FIXED_NOW = new Date("2026-06-15T04:00:00.000Z");
+const TODAY_SGT = "2026-06-15";
+const YESTERDAY_SGT = "2026-06-14";
+const TWO_DAYS_AGO_SGT = "2026-06-13";
+
+function makeStudent(overrides: Partial<Student> = {}): Student {
+  return {
+    id: "s1",
+    name: "Test",
+    currentLevel: "1-a",
+    streakStars: 0,
+    streakFreezes: 0,
+    performanceStars: 0,
+    lastActiveDate: null,
+    lessonsCompleted: 0,
+    ...overrides,
+  };
 }
 
-function getYesterday(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return formatDate(d);
-}
+describe("updateStreakStars", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(FIXED_NOW);
+    // By default updateStudent just echoes the merged student back.
+    mockUpdateStudent.mockResolvedValue(undefined);
+  });
 
-function getToday(): string {
-  return formatDate(new Date());
-}
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
 
-function getTwoDaysAgo(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 2);
-  return formatDate(d);
-}
+  it("sets streak to 1 on the first lesson (no prior activity)", async () => {
+    mockGetStudent.mockResolvedValue(makeStudent({ lastActiveDate: null }));
 
-// Clean up test data before/after each test
-beforeEach(async () => {
-  try {
-    const files = await fs.readdir(dataDir);
-    for (const file of files) {
-      if (file.startsWith("students.json")) {
-        await fs.unlink(path.join(dataDir, file));
-      }
-    }
-  } catch {
-    // Directory might not exist yet
-  }
-});
+    const result = await updateStreakStars("s1");
 
-afterEach(async () => {
-  try {
-    const files = await fs.readdir(dataDir);
-    for (const file of files) {
-      if (file.startsWith("students.json")) {
-        await fs.unlink(path.join(dataDir, file));
-      }
-    }
-  } catch {
-    // Ignore cleanup errors
-  }
-  vi.restoreAllMocks();
-});
+    expect(result).toBe(1);
+    expect(mockUpdateStudent).toHaveBeenCalledWith(
+      "s1",
+      expect.objectContaining({ streakStars: 1, lastActiveDate: TODAY_SGT })
+    );
+  });
 
-describe("StarService", () => {
-  describe("updateStreakStars", () => {
-    it("should set streak to 1 when lastActiveDate is null (first lesson)", async () => {
-      const students = await getAllStudents();
-      const student = students[0];
+  it("increments the streak when last active yesterday", async () => {
+    mockGetStudent.mockResolvedValue(
+      makeStudent({ streakStars: 2, lastActiveDate: YESTERDAY_SGT })
+    );
 
-      const result = await updateStreakStars(student.id);
-      expect(result).toBe(1);
+    const result = await updateStreakStars("s1");
 
-      const updated = await getStudent(student.id);
-      expect(updated?.streakStars).toBe(1);
-      expect(updated?.lastActiveDate).toBe(getToday());
-    });
+    expect(result).toBe(3);
+    expect(mockUpdateStudent).toHaveBeenCalledWith(
+      "s1",
+      expect.objectContaining({ streakStars: 3, lastActiveDate: TODAY_SGT })
+    );
+  });
 
-    it("should increment streak when lastActiveDate is yesterday", async () => {
-      const students = await getAllStudents();
-      const student = students[0];
+  it("keeps incrementing the raw streak with no cap", async () => {
+    mockGetStudent.mockResolvedValue(
+      makeStudent({ streakStars: 5, lastActiveDate: YESTERDAY_SGT })
+    );
 
-      // Set up: student was active yesterday with streak of 2
-      await fs.writeFile(
-        studentsPath,
-        JSON.stringify(
-          students.map((s) =>
-            s.id === student.id
-              ? { ...s, streakStars: 2, lastActiveDate: getYesterday() }
-              : s
-          )
-        ),
-        "utf-8"
-      );
+    const result = await updateStreakStars("s1");
 
-      const result = await updateStreakStars(student.id);
-      expect(result).toBe(3);
+    expect(result).toBe(6);
+    expect(mockUpdateStudent).toHaveBeenCalledWith(
+      "s1",
+      expect.objectContaining({ streakStars: 6 })
+    );
+  });
 
-      const updated = await getStudent(student.id);
-      expect(updated?.streakStars).toBe(3);
-      expect(updated?.lastActiveDate).toBe(getToday());
-    });
+  it("earns a freeze every 10 streak days", async () => {
+    // 9 → 10 crosses the freeze-earn interval.
+    mockGetStudent.mockResolvedValue(
+      makeStudent({ streakStars: 9, streakFreezes: 1, lastActiveDate: YESTERDAY_SGT })
+    );
 
-    it("keeps incrementing the raw streak (the cap applies only to the awarded/displayed bonus)", async () => {
-      const students = await getAllStudents();
-      const student = students[0];
+    const result = await updateStreakStars("s1");
 
-      // Set up: student at a streak of 5, was active yesterday
-      await fs.writeFile(
-        studentsPath,
-        JSON.stringify(
-          students.map((s) =>
-            s.id === student.id
-              ? { ...s, streakStars: 5, lastActiveDate: getYesterday() }
-              : s
-          )
-        ),
-        "utf-8"
-      );
+    expect(result).toBe(10);
+    expect(mockUpdateStudent).toHaveBeenCalledWith(
+      "s1",
+      expect.objectContaining({ streakStars: 10, streakFreezes: 2 })
+    );
+  });
 
-      const result = await updateStreakStars(student.id);
-      expect(result).toBe(6);
+  it("resets the streak to 1 when a day was missed", async () => {
+    mockGetStudent.mockResolvedValue(
+      makeStudent({ streakStars: 4, lastActiveDate: TWO_DAYS_AGO_SGT })
+    );
 
-      const updated = await getStudent(student.id);
-      expect(updated?.streakStars).toBe(6);
-    });
+    const result = await updateStreakStars("s1");
 
-    it("should reset streak to 1 when lastActiveDate is more than 1 day ago", async () => {
-      const students = await getAllStudents();
-      const student = students[0];
+    expect(result).toBe(1);
+    expect(mockUpdateStudent).toHaveBeenCalledWith(
+      "s1",
+      expect.objectContaining({ streakStars: 1, lastActiveDate: TODAY_SGT })
+    );
+  });
 
-      // Set up: student was active 2 days ago with streak of 4
-      await fs.writeFile(
-        studentsPath,
-        JSON.stringify(
-          students.map((s) =>
-            s.id === student.id
-              ? { ...s, streakStars: 4, lastActiveDate: getTwoDaysAgo() }
-              : s
-          )
-        ),
-        "utf-8"
-      );
+  it("leaves the streak unchanged when already active today", async () => {
+    mockGetStudent.mockResolvedValue(
+      makeStudent({ streakStars: 3, lastActiveDate: TODAY_SGT })
+    );
 
-      const result = await updateStreakStars(student.id);
-      expect(result).toBe(1);
+    const result = await updateStreakStars("s1");
 
-      const updated = await getStudent(student.id);
-      expect(updated?.streakStars).toBe(1);
-      expect(updated?.lastActiveDate).toBe(getToday());
-    });
+    expect(result).toBe(3);
+    expect(mockUpdateStudent).toHaveBeenCalledWith(
+      "s1",
+      expect.objectContaining({ streakStars: 3, lastActiveDate: TODAY_SGT })
+    );
+  });
 
-    it("should keep streak unchanged when lastActiveDate is today", async () => {
-      const students = await getAllStudents();
-      const student = students[0];
+  it("throws for a non-existent student", async () => {
+    mockGetStudent.mockResolvedValue(null);
 
-      // Set up: student already completed a lesson today
-      await fs.writeFile(
-        studentsPath,
-        JSON.stringify(
-          students.map((s) =>
-            s.id === student.id
-              ? { ...s, streakStars: 3, lastActiveDate: getToday() }
-              : s
-          )
-        ),
-        "utf-8"
-      );
-
-      const result = await updateStreakStars(student.id);
-      expect(result).toBe(3);
-
-      const updated = await getStudent(student.id);
-      expect(updated?.streakStars).toBe(3);
-    });
-
-    it("should throw for non-existent student", async () => {
-      await getAllStudents(); // Initialize
-      await expect(updateStreakStars("non-existent-id")).rejects.toThrow(
-        "Student not found"
-      );
-    });
+    await expect(updateStreakStars("non-existent-id")).rejects.toThrow(
+      "Student not found"
+    );
   });
 });
