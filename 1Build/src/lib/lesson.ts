@@ -301,13 +301,34 @@ export async function completeLessonAndUpdateState(
     // the review pipeline. Correct answers advance the interval; wrong answers
     // reset to stage 1 so the word comes back soon and keeps being re-tested
     // until it is answered correctly.
+    //
+    // "Once per day" guard: a word's SRS stage may only advance ONCE per
+    // calendar day (SGT). Because the daily new-word batch keeps teaching the
+    // same words across every lesson that day, a correct answer on a word
+    // already reviewed earlier today must NOT advance it again (that would
+    // inflate its interval stage with same-day repetitions). It still counts as
+    // "known"; only the SRS progression is held until the next day.
     if (result.isCorrect) {
-      const currentStage = isReviewWord ? (existingRecord.intervalStage ?? 0) : 0;
-      const srsFields = advanceInterval(currentStage, now);
-      update.intervalStage = srsFields.intervalStage;
-      update.lastReviewedAt = srsFields.lastReviewedAt;
-      update.nextDueDate = srsFields.nextDueDate;
+      const alreadyReviewedToday =
+        isReviewWord &&
+        existingRecord.lastReviewedAt != null &&
+        sgtDateString(new Date(existingRecord.lastReviewedAt)) === sgtDateString(new Date(now));
+
+      if (alreadyReviewedToday) {
+        // Hold the existing schedule — no second advance today.
+        update.intervalStage = existingRecord.intervalStage;
+        update.lastReviewedAt = existingRecord.lastReviewedAt;
+        update.nextDueDate = existingRecord.nextDueDate;
+      } else {
+        const currentStage = isReviewWord ? (existingRecord.intervalStage ?? 0) : 0;
+        const srsFields = advanceInterval(currentStage, now);
+        update.intervalStage = srsFields.intervalStage;
+        update.lastReviewedAt = srsFields.lastReviewedAt;
+        update.nextDueDate = srsFields.nextDueDate;
+      }
     } else {
+      // A wrong answer always resets to stage 1, even if reviewed today — the
+      // student clearly hasn't retained it, so it must come back soon.
       const srsFields = resetInterval(now);
       update.intervalStage = srsFields.intervalStage;
       update.lastReviewedAt = srsFields.lastReviewedAt;

@@ -332,4 +332,70 @@ describe("completeLessonAndUpdateState", () => {
       completeLessonAndUpdateState("nonexistent", [])
     ).rejects.toThrow("Student not found: nonexistent");
   });
+
+  it("does NOT advance the SRS stage again when a word was already reviewed earlier today", async () => {
+    mockGetStudent.mockResolvedValue(mockStudent);
+    mockBulkUpdate.mockResolvedValue(undefined);
+    mockUpdateStreakStars.mockResolvedValue(3);
+    mockUpdateStudent.mockResolvedValue(mockStudent);
+    mockCheckAndAdvanceLevel.mockResolvedValue({ advanced: false });
+
+    // Word already reviewed EARLIER TODAY (SGT) and sitting at stage 4.
+    const earlierTodaySgt = new Date();
+    const existing: KnowledgeRecord = {
+      studentId: "s1",
+      wordId: "3-a:萝",
+      level: "3-a",
+      state: "known",
+      lastUpdated: earlierTodaySgt.toISOString(),
+      intervalStage: 4,
+      lastReviewedAt: earlierTodaySgt.toISOString(),
+      nextDueDate: new Date(earlierTodaySgt.getTime() + 1000).toISOString(),
+    };
+    mockReadKnowledgeRecords.mockResolvedValue([existing]);
+
+    const outcome = await completeLessonAndUpdateState("s1", [
+      makeVocabResult("3-a:萝", true, 4000),
+    ]);
+
+    const update = outcome.knowledgeUpdates.find((u) => u.wordId === "3-a:萝");
+    expect(update).toBeDefined();
+    expect(update!.newState).toBe("known");
+    // Stage must stay at 4 — same-day repetition must not advance it.
+    expect(update!.intervalStage).toBe(4);
+    expect(update!.lastReviewedAt).toBe(existing.lastReviewedAt);
+    expect(update!.nextDueDate).toBe(existing.nextDueDate);
+  });
+
+  it("DOES advance the SRS stage when the word was last reviewed on a previous day", async () => {
+    mockGetStudent.mockResolvedValue(mockStudent);
+    mockBulkUpdate.mockResolvedValue(undefined);
+    mockUpdateStreakStars.mockResolvedValue(3);
+    mockUpdateStudent.mockResolvedValue(mockStudent);
+    mockCheckAndAdvanceLevel.mockResolvedValue({ advanced: false });
+
+    // Word last reviewed well before today (stage 4) → a correct answer today
+    // should advance it to stage 5.
+    const longAgo = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000);
+    const existing: KnowledgeRecord = {
+      studentId: "s1",
+      wordId: "3-a:萝",
+      level: "3-a",
+      state: "known",
+      lastUpdated: longAgo.toISOString(),
+      intervalStage: 4,
+      lastReviewedAt: longAgo.toISOString(),
+      nextDueDate: longAgo.toISOString(),
+    };
+    mockReadKnowledgeRecords.mockResolvedValue([existing]);
+
+    const outcome = await completeLessonAndUpdateState("s1", [
+      makeVocabResult("3-a:萝", true, 4000),
+    ]);
+
+    const update = outcome.knowledgeUpdates.find((u) => u.wordId === "3-a:萝");
+    expect(update).toBeDefined();
+    expect(update!.intervalStage).toBe(5);
+    expect(update!.lastReviewedAt).not.toBe(existing.lastReviewedAt);
+  });
 });
