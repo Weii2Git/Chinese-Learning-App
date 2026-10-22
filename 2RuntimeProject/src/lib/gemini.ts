@@ -63,6 +63,36 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Describe, in Chinese, exactly how a candidate story failed validation so the
+ * next attempt can be corrected. Returns null when the story is valid.
+ */
+function describeStoryProblems(
+  story: string,
+  newWords?: Array<{ character: string }>
+): string | null {
+  const problems: string[] = [];
+  const charCount = countChineseChars(story);
+  if (charCount < STORY_MIN_CHARS) {
+    problems.push(
+      `上一次的故事太短了（只有${charCount}个汉字），必须写到${STORY_PROMPT_MIN_CHARS}到${STORY_PROMPT_MAX_CHARS}个汉字，请把故事写得更长更详细。`
+    );
+  } else if (charCount > STORY_MAX_CHARS) {
+    problems.push(
+      `上一次的故事太长了（有${charCount}个汉字），必须控制在${STORY_PROMPT_MIN_CHARS}到${STORY_PROMPT_MAX_CHARS}个汉字，请写得更简短。`
+    );
+  }
+  if (newWords) {
+    const missing = newWords.filter((w) => !story.includes(w.character)).map((w) => w.character);
+    if (missing.length > 0) {
+      problems.push(
+        `上一次的故事漏掉了这些必须使用的新词：${missing.join("、")}。请确保每个新词都完整出现在故事里。`
+      );
+    }
+  }
+  return problems.length > 0 ? problems.join("\n") : null;
+}
+
+/**
  * Build the prompt for story generation.
  */
 function buildStoryPrompt(params: StoryParams): string {
@@ -85,9 +115,9 @@ ${knownWordsStr}
 
 要求：
 1. 故事必须使用简体中文
-2. 故事长度必须在${STORY_PROMPT_MIN_CHARS}到${STORY_PROMPT_MAX_CHARS}个汉字之间
-3. 故事内容要适合儿童阅读并且有趣，新颖或搞笑
-4. 所有新词汇必须在故事中完整出现至少一次（例如：词汇是"恢复"，故事中必须出现"恢复"这两个字连在一起，不能只用其中一个字）
+2. 【最重要】故事长度必须在${STORY_PROMPT_MIN_CHARS}到${STORY_PROMPT_MAX_CHARS}个汉字之间（不包括标点符号）。字数太少或太多都不行，请在写完后数一数汉字数量，确保落在这个范围内。
+3. 【最重要】下列每一个新词汇都必须完整出现在故事里，一个都不能漏：${newWordsStr}。例如词汇是"恢复"，故事中必须出现"恢复"这两个字连在一起，不能只用其中一个字。
+4. 故事内容要适合儿童阅读并且有趣，新颖或搞笑
 5. 新词汇只能按其真实含义使用，绝对不能把任何新词汇用作人物的名字或名字的一部分（这样会误导学生对词义的理解）
 6. 人物名字只能使用学生已掌握的汉字，或下列常见名字：小明、小红、小丽、小华、东东、乐乐、妈妈、爸爸、老师。绝对不要用新词汇中的字来取名
 7. 故事的难度要符合等级 ${params.level} 的水平
@@ -252,10 +282,18 @@ function parseStoryResponse(text: string): StoryResult {
  *
  * If validation fails, retries once automatically.
  */
-export async function generateStory(params: StoryParams): Promise<StoryResult> {
-  const prompt = buildStoryPrompt(params);
+const STORY_MAX_ATTEMPTS = 6;
 
-  async function attemptGeneration(): Promise<StoryResult> {
+export async function generateStory(params: StoryParams): Promise<StoryResult> {
+  const basePrompt = buildStoryPrompt(params);
+
+  // Run one generation pass. `feedback` (when present) tells the model what was
+  // wrong with the previous attempt so it can self-correct — this is far more
+  // effective than re-sending the identical prompt.
+  async function attemptGeneration(feedback: string | null): Promise<StoryResult> {
+    const prompt = feedback
+      ? `${basePrompt}\n\n重要：请修正上一次的问题：\n${feedback}`
+      : basePrompt;
     try {
       const text = await complete(prompt, { json: true });
       return parseStoryResponse(text);
@@ -276,24 +314,38 @@ export async function generateStory(params: StoryParams): Promise<StoryResult> {
     }
   }
 
-  // First attempt
-  try {
-    const result = await attemptGeneration();
-    if (isValidStory(result.story, params.newWords)) {
-      return result;
+  // Loop up to STORY_MAX_ATTEMPTS, feeding back the specific validation failure
+  // (too short/long, missing new words) into each subsequent attempt. Keep the
+  // "closest" candidate so a late failure still yields the best story we saw.
+  let feedback: string | null = null;
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < STORY_MAX_ATTEMPTS; attempt++) {
+    try {
+      const result = await attemptGeneration(feedback);
+      const problems = describeStoryProblems(result.story, params.newWords);
+      if (!problems) {
+        return result;
+      }
+      feedback = problems; // guide the next attempt
+    } catch (error) {
+      lastError = error;
+      // A hard error (bad API key, timeout) won't be fixed by retrying with
+      // feedback — stop early and surface it.
+      if (
+        error instanceof Error &&
+        (error.message.includes("API key") || error.message.includes("timed out"))
+      ) {
+        throw error;
+      }
     }
-  } catch {
-    // Fall through to retry
   }
 
-  // Auto-retry once
-  const retryResult = await attemptGeneration();
-  if (isValidStory(retryResult.story, params.newWords)) {
-    return retryResult;
+  if (lastError instanceof Error) {
+    throw lastError;
   }
-
   throw new Error(
-    `Generated story does not meet requirements. ` +
+    `Generated story does not meet requirements after ${STORY_MAX_ATTEMPTS} attempts. ` +
     `Expected ${STORY_MIN_CHARS}-${STORY_MAX_CHARS} Chinese characters and all new words present. ` +
     `Please try again.`
   );
