@@ -6,10 +6,13 @@ export const REVIEW_WORDS_PER_LESSON = 15;
 export const REVIEW_WORDS_BUFFER = 5; // extra review words for test backup when deduplication removes questions
 export const MAX_STREAK_BONUS = 10; // streak bonus stars are capped at this (the raw streak count itself is uncapped)
 export const LEVEL_ADVANCE_THRESHOLD = 0.9; // 90%
+// Validation window — a story is accepted if its Chinese-char count is in here.
 export const STORY_MIN_CHARS = 300;
 export const STORY_MAX_CHARS = 550;
-export const STORY_PROMPT_MIN_CHARS = 350;
-export const STORY_PROMPT_MAX_CHARS = 500;
+// Prompt target — kept tight and centered inside the validation window so that
+// even when the model drifts by ±100 chars, it still lands within 300-550.
+export const STORY_PROMPT_MIN_CHARS = 400;
+export const STORY_PROMPT_MAX_CHARS = 450;
 
 export const LEVELS = [
   "1-a",
