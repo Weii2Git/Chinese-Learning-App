@@ -19,7 +19,8 @@ export function StoryDisplay({ story, segmentedStory, newWords, onWordLookup, on
 
   const newWordChars = useMemo(() => new Set(newWords.map((w) => w.character)), [newWords]);
 
-  const handleWordClick = useCallback(
+  // Lookups fire on DOUBLE-click (not single click) to avoid accidental taps.
+  const handleWordLookup = useCallback(
     (e: React.MouseEvent, segment: string) => {
       e.preventDefault();
       setPopup({ text: segment, position: { x: e.clientX, y: e.clientY } });
@@ -60,13 +61,12 @@ export function StoryDisplay({ story, segmentedStory, newWords, onWordLookup, on
       return (
         <span
           key={i}
-          className={`cursor-pointer rounded px-0.5 transition-colors ${
+          className={`cursor-pointer select-none rounded px-0.5 transition-colors ${
             isNew
               ? "bg-amber-500/20 text-amber-300 font-semibold hover:bg-amber-500/30"
               : "hover:bg-slate-700 hover:text-white"
           }`}
-          onClick={(e) => handleWordClick(e, segment)}
-          onContextMenu={(e) => handleWordClick(e, segment)}
+          onDoubleClick={(e) => handleWordLookup(e, segment)}
         >
           {segment}
         </span>
@@ -85,7 +85,7 @@ export function StoryDisplay({ story, segmentedStory, newWords, onWordLookup, on
           <span className="inline-block rounded bg-amber-500/20 text-amber-300 px-1.5 py-0.5 font-bold text-xs">新</span>
           New character
         </span>
-        <span>Click any word for pinyin, meaning &amp; pronunciation</span>
+        <span>Double-click any word for pinyin, meaning &amp; pronunciation</span>
       </div>
 
       {popup && (

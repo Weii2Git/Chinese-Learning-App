@@ -128,7 +128,7 @@ export default function ReadingPage() {
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">Reading Time</h1>
-          <p className="text-slate-400 text-base mt-2">Click any character for pinyin, meaning &amp; pronunciation</p>
+          <p className="text-slate-400 text-base mt-2">Double-click any character for pinyin, meaning &amp; pronunciation</p>
         </div>
 
         <StoryDisplay

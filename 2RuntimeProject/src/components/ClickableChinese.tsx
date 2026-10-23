@@ -6,9 +6,9 @@ import { WordPopup } from "./WordPopup";
 interface ClickableChineseProps {
   /** Raw Chinese text (not pre-segmented). */
   text: string;
-  /** Called with each word the user taps, so it can be recorded for review. */
+  /** Called with each word the user double-clicks, so it can be recorded for review. */
   onWordLookup?: (word: string) => void;
-  /** Called with a tapped word's resolved meaning, so it can be stored. */
+  /** Called with a looked-up word's resolved meaning, so it can be stored. */
   onMeaningResolved?: (word: string, meaning: string) => void;
   /** Optional local meaning cache passed through to the popup. */
   wordMeanings?: Record<string, string>;
@@ -51,16 +51,18 @@ function useSegments(text: string): string[] {
 }
 
 /**
- * Renders Chinese text where each word is tappable to show a pinyin/meaning
- * popup (reusing WordPopup), and reports taps via onWordLookup so the word can
- * be added to the student's review list. Non-Chinese segments (punctuation,
+ * Renders Chinese text where each word opens a pinyin/meaning popup on
+ * double-click (reusing WordPopup), and reports the lookup via onWordLookup so
+ * the word can be added to the student's review list. Double-click (rather than
+ * single click) avoids accidental lookups. Non-Chinese segments (punctuation,
  * spaces) render as plain text.
  */
 export function ClickableChinese({ text, onWordLookup, onMeaningResolved, wordMeanings, className }: ClickableChineseProps) {
   const [popup, setPopup] = useState<{ text: string; position: { x: number; y: number } } | null>(null);
   const segments = useSegments(text);
 
-  const handleClick = (e: React.MouseEvent, segment: string) => {
+  // Lookups fire on DOUBLE-click (not single click) to avoid accidental taps.
+  const handleLookup = (e: React.MouseEvent, segment: string) => {
     e.preventDefault();
     e.stopPropagation();
     setPopup({ text: segment, position: { x: e.clientX, y: e.clientY } });
@@ -76,9 +78,8 @@ export function ClickableChinese({ text, onWordLookup, onMeaningResolved, wordMe
           return (
             <span
               key={i}
-              className="cursor-pointer rounded px-0.5 transition-colors hover:bg-slate-700 hover:text-white"
-              onClick={(e) => handleClick(e, segment)}
-              onContextMenu={(e) => handleClick(e, segment)}
+              className="cursor-pointer select-none rounded px-0.5 transition-colors hover:bg-slate-700 hover:text-white"
+              onDoubleClick={(e) => handleLookup(e, segment)}
             >
               {segment}
             </span>

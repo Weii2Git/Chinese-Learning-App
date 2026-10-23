@@ -188,7 +188,7 @@ export function QuestionCard({ question, onAnswer, onConfirm, onWordLookup, onMe
           <p className="text-lg text-slate-200 leading-relaxed">{question.data.question}</p>
         )}
         {onWordLookup && (
-          <p className="mt-2 text-xs text-slate-500">Tap any word for pinyin, meaning &amp; pronunciation</p>
+          <p className="mt-2 text-xs text-slate-500">Double-click any word for pinyin, meaning &amp; pronunciation</p>
         )}
       </div>
 
