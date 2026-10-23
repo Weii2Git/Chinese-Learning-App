@@ -108,10 +108,23 @@ export function generateCombinedQuestion(
   // Rules:
   // 1. All options must have the same number of syllables as the character count
   // 2. If word has repeated characters (e.g. 慢慢), distractors must follow same pattern (X X)
-  // 3. Common characters (一,子,不,的,儿,小,大,人,了,是,在,有) keep their pinyin fixed;
-  //    only vary the non-common characters
+  // 3. Common characters keep their pinyin fixed across ALL options (so knowing
+  //    a simple shared character can't eliminate any choice); only the
+  //    non-common character's pinyin varies. Groups:
+  //      - particles / basics:   的 了 子 一 不 是 在 有 大 小 人 儿
+  //      - pronouns:             我 你 他 她 们 这 那
+  //      - numbers:              二 三 四 五 六 七 八 九 十
+  //      - position / direction: 上 下 中 里 外 前 后 左 右
+  //      - very common verbs:    去 来 好 多 少 个 会 要 看 吃 到
 
-  const COMMON_CHARS = new Set("一子不的儿小大人了是在有我你他她们这那".split(""));
+  const COMMON_CHARS = new Set(
+    (
+      "一子不的儿小大人了是在有我你他她们这那" + // particles/basics + pronouns
+      "二三四五六七八九十" +                      // numbers
+      "上下中里外前后左右" +                      // position / direction
+      "去来好多少个会要看吃到"                    // very common verbs/basics
+    ).split("")
+  );
 
   // Split the correct pinyin into syllables
   const correctSyllables = correctPinyin.split(" ");
