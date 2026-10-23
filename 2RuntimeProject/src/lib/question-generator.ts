@@ -203,18 +203,57 @@ export function generateCombinedQuestion(
     }
   }
 
-  const uniquePinyinPool = [...new Set(pinyinPool)];
-  let pinyinDistractors = shuffle([...uniquePinyinPool]).slice(0, 3);
+  // Normalize a candidate distractor so that at every COMMON-character position
+  // it carries the SAME (correct) pinyin as the answer. This stops a student
+  // from eliminating options just by knowing a simple shared character like
+  // 子/一/了/的/不 — every option shows the identical syllable in those slots,
+  // so the question hinges on the non-common character. Returns null if, after
+  // fixing the common positions, the candidate equals the correct answer (i.e.
+  // it only differed in a common slot and carries no real distraction).
+  const normalizeFixed = (candidate: string): string | null => {
+    if (fixedPositions.size === 0) return candidate;
+    const syl = candidate.split(" ");
+    if (syl.length !== charCount) return null; // wrong shape, discard
+    for (const [pos, correctSyl] of fixedPositions) {
+      syl[pos] = correctSyl;
+    }
+    const fixed = syl.join(" ");
+    return fixed === correctPinyin ? null : fixed;
+  };
 
-  // Ensure we always have exactly 3 distractors (4 options total)
-  // If pool is too small, pad with pinyin from allWords (even if single char)
+  // Apply the fixed-position normalization to the whole pool, then de-dupe.
+  const normalizedPool = [...new Set(
+    pinyinPool
+      .map((p) => normalizeFixed(p))
+      .filter((p): p is string => p !== null)
+  )];
+  let pinyinDistractors = shuffle([...normalizedPool]).slice(0, 3);
+
+  // Ensure we always have exactly 3 distractors (4 options total).
+  // If pool is too small, pad with pinyin from allWords (matching syllable
+  // count so the fixed-position normalization applies cleanly).
   if (pinyinDistractors.length < 3) {
     const fallbackPinyins = allWords
       .filter((w) => w.id !== word.id)
       .map((w) => w.pinyin)
+      .filter((p) => p && p.length > 0 && p.split(" ").length === charCount);
+    const normalizedFallback = [...new Set(
+      fallbackPinyins
+        .map((p) => normalizeFixed(p))
+        .filter((p): p is string => p !== null && !pinyinDistractors.includes(p))
+    )];
+    pinyinDistractors = [...pinyinDistractors, ...shuffle(normalizedFallback).slice(0, 3 - pinyinDistractors.length)];
+  }
+
+  // Last-resort padding if STILL short (e.g. tiny word pools): use any distinct
+  // pinyin, normalized where possible. Better a slightly-off option than fewer
+  // than 4 choices.
+  if (pinyinDistractors.length < 3) {
+    const anyPinyins = allWords
+      .filter((w) => w.id !== word.id)
+      .map((w) => w.pinyin)
       .filter((p) => p && p.length > 0 && p !== correctPinyin && !pinyinDistractors.includes(p));
-    const uniqueFallback = [...new Set(fallbackPinyins)];
-    pinyinDistractors = [...pinyinDistractors, ...shuffle(uniqueFallback).slice(0, 3 - pinyinDistractors.length)];
+    pinyinDistractors = [...pinyinDistractors, ...shuffle([...new Set(anyPinyins)]).slice(0, 3 - pinyinDistractors.length)];
   }
 
   const pinyinOptions = shuffle([correctPinyin, ...pinyinDistractors]);

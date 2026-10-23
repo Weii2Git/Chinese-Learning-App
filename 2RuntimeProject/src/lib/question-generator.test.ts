@@ -75,6 +75,52 @@ describe("generateCombinedQuestion", () => {
     }
   });
 
+  it("keeps a common character's pinyin identical across ALL options (房子)", () => {
+    // 房子 (fáng zi): 子 is a common char. Every option must show "zi" in the
+    // second slot, so knowing 子 alone can't eliminate any choice.
+    const word: Word = { id: "房", character: "房", pinyin: "fáng", english: "house", level: "3-a" };
+    const pool: Word[] = [
+      word,
+      { id: "桌", character: "桌", pinyin: "zhuō", english: "table", level: "3-a" },
+      { id: "学", character: "学", pinyin: "xué", english: "study", level: "3-a" },
+      { id: "校", character: "校", pinyin: "xiào", english: "school", level: "3-a" },
+      { id: "朋", character: "朋", pinyin: "péng", english: "friend", level: "3-a" },
+      { id: "友", character: "友", pinyin: "yǒu", english: "friend", level: "3-a" },
+    ];
+    const q = generateCombinedQuestion(word, pool, true, "房子", "fáng zi", "house");
+
+    expect(q.pinyinOptions).toHaveLength(4);
+    // Every option is two syllables and the SECOND syllable is always "zi".
+    for (const opt of q.pinyinOptions) {
+      const syllables = opt.split(" ");
+      expect(syllables).toHaveLength(2);
+      expect(syllables[1]).toBe("zi");
+    }
+    // The correct answer is present and the first syllables differ (real test).
+    expect(q.pinyinOptions).toContain("fáng zi");
+    const firstSyllables = new Set(q.pinyinOptions.map((o) => o.split(" ")[0]));
+    expect(firstSyllables.size).toBeGreaterThan(1);
+  });
+
+  it("keeps a leading common character's pinyin fixed too (小门)", () => {
+    // 小 is common; its pinyin "xiǎo" must appear in the first slot of every
+    // option, forcing the student to know the second character.
+    const word: Word = { id: "门", character: "门", pinyin: "mén", english: "door", level: "1-a" };
+    const pool: Word[] = [
+      word,
+      { id: "车", character: "车", pinyin: "chē", english: "car", level: "1-a" },
+      { id: "狗", character: "狗", pinyin: "gǒu", english: "dog", level: "1-a" },
+      { id: "猫", character: "猫", pinyin: "māo", english: "cat", level: "1-a" },
+      { id: "鱼", character: "鱼", pinyin: "yú", english: "fish", level: "1-a" },
+    ];
+    const q = generateCombinedQuestion(word, pool, true, "小门", "xiǎo mén", "small door");
+
+    for (const opt of q.pinyinOptions) {
+      expect(opt.split(" ")[0]).toBe("xiǎo");
+    }
+    expect(q.pinyinOptions).toContain("xiǎo mén");
+  });
+
   it("meaning distractors are different from correct meaning", () => {
     const question = generateCombinedQuestion(
       sampleWords[0], sampleWords, true, "你", "nǐ", "you"
