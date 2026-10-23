@@ -95,6 +95,11 @@ export function advanceInterval(
   let nextStage: number;
   if (isRetired(currentStage)) {
     nextStage = SRS_RETIRED_STAGE;
+  } else if (currentStage < SRS_INITIAL_STAGE) {
+    // Never-reviewed word (stage 0/undefined): the first correct answer lands
+    // on the initial stage (1), NOT stage 2. Using clampStage here would floor
+    // 0 up to 1 and then add 1, skipping stage 1 entirely.
+    nextStage = SRS_INITIAL_STAGE;
   } else if (currentStage >= SRS_MAX_STAGE) {
     // Correct at the final active stage → retire.
     nextStage = SRS_RETIRED_STAGE;

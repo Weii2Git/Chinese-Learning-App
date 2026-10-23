@@ -448,4 +448,25 @@ describe("completeLessonAndUpdateState", () => {
     expect(update!.intervalStage).toBe(5);
     expect(update!.lastReviewedAt).not.toBe(existing.lastReviewedAt);
   });
+
+  it("advances a brand-new word to stage 1 (not 2) on the first correct answer", async () => {
+    mockGetStudent.mockResolvedValue(mockStudent);
+    mockBulkUpdate.mockResolvedValue(undefined);
+    mockUpdateStreakStars.mockResolvedValue(3);
+    mockUpdateStudent.mockResolvedValue(mockStudent);
+    mockCheckAndAdvanceLevel.mockResolvedValue({ advanced: false });
+
+    // No existing record → brand-new word. First correct answer must land on
+    // stage 1, not skip to stage 2.
+    mockReadKnowledgeRecords.mockResolvedValue([]);
+
+    const outcome = await completeLessonAndUpdateState("s1", [
+      makeVocabResult("4-a:律", true, 4000),
+    ]);
+
+    const update = outcome.knowledgeUpdates.find((u) => u.wordId === "4-a:律");
+    expect(update).toBeDefined();
+    expect(update!.newState).toBe("known");
+    expect(update!.intervalStage).toBe(1);
+  });
 });
