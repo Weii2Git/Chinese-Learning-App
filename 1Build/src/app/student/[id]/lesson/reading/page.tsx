@@ -24,24 +24,30 @@ export default function ReadingPage() {
   const currentStudentRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (lessonState && lessonState.studentId !== studentId) {
-      resetLesson();
-      fetchingRef.current = false;
-      currentStudentRef.current = null;
-      setPhase("init");
+    // An already-generated story means this reading page is resuming an
+    // in-progress lesson (e.g. a page refresh mid-reading) — keep it as-is.
+    if (lessonState && lessonState.studentId === studentId && lessonState.story) {
+      setAllWords([...lessonState.newWords, ...lessonState.reviewWords]);
+      setPhase("done");
       return;
     }
-    if (!lessonState && currentStudentRef.current !== studentId) {
+
+    // First time this reading page mounts for this student: force a clean start.
+    // This clears any leftover state from a previous lesson — crucially
+    // lookedUpWords, which would otherwise re-record (as lookup:* entries) words
+    // the student clicked in earlier lessons. We gate on currentStudentRef so
+    // this runs exactly once per entry, avoiding a reset/init loop.
+    if (currentStudentRef.current !== studentId) {
       currentStudentRef.current = studentId;
+      fetchingRef.current = false;
+      resetLesson();
       initLesson(studentId);
       return;
     }
-    if (lessonState && lessonState.studentId === studentId) {
-      if (lessonState.story) {
-        setAllWords([...lessonState.newWords, ...lessonState.reviewWords]);
-        setPhase("done");
-        return;
-      }
+
+    // Fresh lesson has been initialized (lookedUpWords empty, no story yet) —
+    // generate the word selection + story once.
+    if (lessonState && lessonState.studentId === studentId && !lessonState.story) {
       if (!fetchingRef.current) {
         fetchingRef.current = true;
         fetchAndGenerate();
