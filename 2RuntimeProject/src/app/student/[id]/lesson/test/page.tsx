@@ -93,7 +93,11 @@ export default function TestPage() {
         }
       }
 
-      const fullTest = buildTest(newWords, reviewWords, comprehensionQuestions, lessonState?.segmentedStory, wordMeanings, lessonState?.lookedUpWords, knowledgeRecords, settings.vocabQuestionsCount, settings.comprehensionQuestionsCount);
+      // The vocab test size comes from the lesson selection (vocabTestTarget),
+      // which already factored in the admin setting + any review backlog — not
+      // the raw admin vocabQuestionsCount (which would ignore backlog growth).
+      const vocabTarget = lessonState?.vocabTestTarget ?? settings.vocabQuestionsCount;
+      const fullTest = buildTest(newWords, reviewWords, comprehensionQuestions, lessonState?.segmentedStory, wordMeanings, lessonState?.lookedUpWords, knowledgeRecords, vocabTarget, settings.comprehensionQuestionsCount);
       questionsRef.current = fullTest;
       setQuestions(fullTest);
       markNewRoundStart(); // mark where this round's results start

@@ -64,8 +64,12 @@ export default function RereadPage() {
       const settings = await fetch("/api/settings")
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null);
-      const vocabCount = settings?.vocabQuestionsCount ?? 20;
       const compCount = settings?.comprehensionQuestionsCount ?? 5;
+      // Keep the SAME vocab count as the main test (which already accounts for
+      // the admin setting + any backlog growth), so a retest isn't trimmed.
+      const vocabCount = lessonState.vocabTestTarget
+        ?? (lessonState.questions ?? []).filter((q) => q.kind === "vocab").length
+        ?? (settings?.vocabQuestionsCount ?? 20);
 
       const res = await fetch("/api/generate-comprehension", {
         method: "POST",

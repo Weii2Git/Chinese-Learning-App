@@ -14,7 +14,7 @@ const SESSION_STORAGE_KEY = "lesson-state";
 interface LessonContextValue {
   lessonState: LessonState | null;
   setStory: (story: string, segmented: string, wordMeanings?: Record<string, string>) => void;
-  setWords: (newWords: Word[], reviewWords: Word[]) => void;
+  setWords: (newWords: Word[], reviewWords: Word[], vocabTestTarget: number) => void;
   setQuestions: (questions: Question[]) => void;
   addResult: (result: QuestionResult) => void;
   setStudentId: (studentId: string) => void;
@@ -82,10 +82,10 @@ export function LessonProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const setWords = useCallback((newWords: Word[], reviewWords: Word[]) => {
+  const setWords = useCallback((newWords: Word[], reviewWords: Word[], vocabTestTarget: number) => {
     setLessonState((prev) => {
       if (!prev) return prev;
-      return { ...prev, newWords, reviewWords };
+      return { ...prev, newWords, reviewWords, vocabTestTarget };
     });
   }, []);
 
@@ -160,6 +160,7 @@ export function LessonProvider({ children }: { children: React.ReactNode }) {
       wordMeanings: {},
       newWords: [],
       reviewWords: [],
+      vocabTestTarget: 20,
       questions: [],
       results: [],
       comprehensionLoopCount: 0,

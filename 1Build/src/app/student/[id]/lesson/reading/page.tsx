@@ -65,8 +65,8 @@ export default function ReadingPage() {
         const data = await wordsRes.json();
         throw new Error(data.error || "Failed to fetch word selections");
       }
-      const { newWords, reviewWords } = (await wordsRes.json()) as { newWords: Word[]; reviewWords: Word[] };
-      setWords(newWords, reviewWords);
+      const { newWords, reviewWords, vocabTestTarget } = (await wordsRes.json()) as { newWords: Word[]; reviewWords: Word[]; vocabTestTarget: number };
+      setWords(newWords, reviewWords, vocabTestTarget ?? 20);
       setAllWords([...newWords, ...reviewWords]);
       setPhase("loading-story");
 

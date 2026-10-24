@@ -1,9 +1,22 @@
 export const QUESTION_TIMER_MS = 15000; // 15 seconds per question
+// Default normal test size when the admin setting isn't available.
 export const VOCAB_QUESTIONS_COUNT = 20;
 export const COMPREHENSION_QUESTIONS_COUNT = 5;
+// New words introduced per lesson (always tested). Review words tested =
+// vocabQuestionsCount - NEW_WORDS_PER_LESSON.
 export const NEW_WORDS_PER_LESSON = 5;
+// Legacy constant kept for backward compatibility / tests. The actual review
+// count is now derived from the admin vocabQuestionsCount at runtime.
 export const REVIEW_WORDS_PER_LESSON = 15;
-export const REVIEW_WORDS_BUFFER = 5; // extra review words for test backup when deduplication removes questions
+// Extra review words added to the ARTICLE/prompt only (not the test count), so
+// enough review words land in the story to hit the test target even if the AI
+// can't weave them all in.
+export const REVIEW_WORDS_BUFFER = 5;
+// When a student has a review backlog, the test may grow beyond the normal size
+// by up to this many extra review questions...
+export const REVIEW_BACKLOG_BOOST = 10;
+// ...but the total vocab test is never larger than this.
+export const MAX_VOCAB_QUESTIONS = 30;
 export const MAX_STREAK_BONUS = 10; // streak bonus stars are capped at this (the raw streak count itself is uncapped)
 export const LEVEL_ADVANCE_THRESHOLD = 0.9; // 90%
 // Validation window — a story is accepted if its Chinese-char count is in here.

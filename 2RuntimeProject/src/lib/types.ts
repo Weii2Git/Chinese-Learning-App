@@ -80,6 +80,7 @@ export interface LessonState {
   wordMeanings: Record<string, string>;
   newWords: Word[];
   reviewWords: Word[];
+  vocabTestTarget: number; // number of vocab questions to test (see WordSelection)
   questions: Question[];
   results: QuestionResult[];
   comprehensionLoopCount: number;
@@ -95,7 +96,13 @@ export interface EnrichedWordCache {
 
 export interface WordSelection {
   newWords: Word[];
+  // Review words for the ARTICLE/prompt: the test target plus a buffer of extra
+  // words so enough review words land in the story to hit the test target.
   reviewWords: Word[];
+  // How many vocab questions the test should actually contain (new + review
+  // tested). Normally = vocabQuestionsCount; grows above it (capped at 30) when
+  // the student has a review backlog. The buffer review words do NOT count here.
+  vocabTestTarget: number;
 }
 
 export interface KnowledgeSummary {

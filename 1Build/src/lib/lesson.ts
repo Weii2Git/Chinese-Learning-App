@@ -1,8 +1,10 @@
 import {
   LEVELS,
   NEW_WORDS_PER_LESSON,
-  REVIEW_WORDS_PER_LESSON,
   REVIEW_WORDS_BUFFER,
+  REVIEW_BACKLOG_BOOST,
+  MAX_VOCAB_QUESTIONS,
+  VOCAB_QUESTIONS_COUNT,
   MAX_STREAK_BONUS,
 } from "./constants";
 import { readKnowledgeRecords, bulkUpdate } from "./knowledge";
@@ -123,13 +125,45 @@ export async function selectWordsForLesson(
   // prioritized by SRS.
   const reviewableRecords = studentRecords;
   const now = new Date().toISOString();
-  
-  // Check for backlog — if overdue words exist, allow up to 10 extra review slots (max 30 total)
+
+  // ── Test-size math (matches the intended design) ──────────────────────────
+  // The admin setting defines the NORMAL total test size. Of that, 5 are new
+  // words; the remainder are review words TESTED.
+  //   normalReviewTested = vocabQuestionsCount - NEW_WORDS_PER_LESSON
+  // When the student has a review backlog (more overdue review words than the
+  // normal review-tested count), the test is allowed to grow by up to
+  // REVIEW_BACKLOG_BOOST extra review questions, but the TOTAL test never
+  // exceeds MAX_VOCAB_QUESTIONS (30).
+  //   reviewTested = normalReviewTested + min(boost, backlog overflow)
+  // The article/prompt additionally includes REVIEW_WORDS_BUFFER extra review
+  // words (NOT counted in the test) so enough review words make it into the
+  // story to achieve the tested target.
+  let vocabQuestionsCount = VOCAB_QUESTIONS_COUNT;
+  try {
+    const settings = await getAppSettings();
+    if (settings.vocabQuestionsCount > 0) vocabQuestionsCount = settings.vocabQuestionsCount;
+  } catch {
+    // fall back to the default on any settings error
+  }
+
+  const normalReviewTested = Math.max(0, vocabQuestionsCount - NEW_WORDS_PER_LESSON);
+  // Max review that can be tested overall (keeps total test ≤ MAX_VOCAB_QUESTIONS).
+  const maxReviewTested = Math.max(0, MAX_VOCAB_QUESTIONS - NEW_WORDS_PER_LESSON);
+
   const overdueCount = countOverdue(reviewableRecords, now);
-  const extraSlots = Math.min(overdueCount > REVIEW_WORDS_PER_LESSON ? 10 : 0, overdueCount - REVIEW_WORDS_PER_LESSON);
-  const reviewLimit = REVIEW_WORDS_PER_LESSON + REVIEW_WORDS_BUFFER + Math.max(0, extraSlots);
-  
-  const prioritizedRecords = prioritizeReviewWords(reviewableRecords, now, reviewLimit);
+  // Backlog overflow: how many overdue review words beyond the normal tested count.
+  const backlogOverflow = Math.max(0, overdueCount - normalReviewTested);
+  const boost = Math.min(REVIEW_BACKLOG_BOOST, backlogOverflow);
+  const reviewTestTarget = Math.min(normalReviewTested + boost, maxReviewTested);
+
+  // Article/selection pool = tested target + buffer (buffer never affects the
+  // test count; it only gives the AI extra review words to work into the story).
+  const reviewArticleCount = reviewTestTarget + REVIEW_WORDS_BUFFER;
+
+  // Total vocab questions the test should contain.
+  const vocabTestTarget = NEW_WORDS_PER_LESSON + reviewTestTarget;
+
+  const prioritizedRecords = prioritizeReviewWords(reviewableRecords, now, reviewArticleCount);
 
   // Map prioritized records back to Word objects
   const wordMap = new Map<string, Word>();
@@ -170,11 +204,11 @@ export async function selectWordsForLesson(
   // words (below) and finally by incidental "probe" words drawn from the story
   // at test-build time (see buildTest / probe-words.ts).
 
-  // If total (new + review) is still less than target, increase new words to fill the gap
-  // If total (new + review) is still less than target, increase new words to
-  // fill the gap — but NOT when the daily batch is locked, since that must keep
-  // exactly today's fixed set of new words.
-  const totalTarget = NEW_WORDS_PER_LESSON + reviewLimit;
+  // If total (new + review) is still less than the article target, increase new
+  // words to fill the gap — but NOT when the daily batch is locked, since that
+  // must keep exactly today's fixed set of new words. Target here uses the
+  // article count (tested target + buffer) so the story has enough words.
+  const totalTarget = NEW_WORDS_PER_LESSON + reviewArticleCount;
   const totalSelected = newWords.length + reviewWords.length;
   if (
     !options.lockDailyBatch &&
@@ -189,7 +223,7 @@ export async function selectWordsForLesson(
     newWords = [...newWords, ...extraNew];
   }
 
-  return { newWords, reviewWords };
+  return { newWords, reviewWords, vocabTestTarget };
 }
 
 /**

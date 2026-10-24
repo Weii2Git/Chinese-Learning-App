@@ -213,6 +213,43 @@ describe("selectWordsForLesson", () => {
 
     expect(result.newWords.length).toBe(2);
   });
+
+  it("sets vocabTestTarget to the normal size (20) when there is no backlog", async () => {
+    const words: Word[] = [];
+    for (let i = 0; i < 40; i++) words.push(makeWord(`w${i}`, "1-a"));
+    mockGetAllWords.mockResolvedValue(words);
+
+    // A few introduced words, all NOT due (far-future due date) → no backlog.
+    const future = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
+    const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const recs: KnowledgeRecord[] = [];
+    for (let i = 0; i < 3; i++) {
+      recs.push({ studentId: "s1", wordId: `w${i}`, level: "1-a", state: "known", lastUpdated: past, intervalStage: 2, lastReviewedAt: past, nextDueDate: future });
+    }
+    mockReadKnowledgeRecords.mockResolvedValue(recs);
+
+    const result = await selectWordsForLesson("s1", "1-a");
+    // Default admin vocabQuestionsCount is 20 in tests (no Supabase → DEFAULTS).
+    expect(result.vocabTestTarget).toBe(20);
+  });
+
+  it("grows vocabTestTarget above 20 (capped at 30) when many review words are overdue", async () => {
+    const words: Word[] = [];
+    for (let i = 0; i < 60; i++) words.push(makeWord(`w${i}`, "1-a"));
+    mockGetAllWords.mockResolvedValue(words);
+
+    // 40 overdue review words (due in the past) → large backlog. Normal review
+    // tested = 15; backlog boost adds up to 10 → review tested 25 → total 30.
+    const past = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    const recs: KnowledgeRecord[] = [];
+    for (let i = 0; i < 40; i++) {
+      recs.push({ studentId: "s1", wordId: `w${i}`, level: "1-a", state: "known", lastUpdated: past, intervalStage: 2, lastReviewedAt: past, nextDueDate: past });
+    }
+    mockReadKnowledgeRecords.mockResolvedValue(recs);
+
+    const result = await selectWordsForLesson("s1", "1-a");
+    expect(result.vocabTestTarget).toBe(30);
+  });
 });
 
 describe("completeLessonAndUpdateState", () => {

@@ -54,7 +54,11 @@ export async function GET(request: NextRequest) {
       english: w.english,
       level: w.level,
     }));
-    nextReviewWords = selection.reviewWords.map((w) => ({
+    // Show the review words that would actually be TESTED (vocabTestTarget minus
+    // the new words), not the larger article pool that also carries buffer
+    // words. This keeps the admin view consistent with the real test size.
+    const reviewTested = Math.max(0, selection.vocabTestTarget - selection.newWords.length);
+    nextReviewWords = selection.reviewWords.slice(0, reviewTested).map((w) => ({
       character: w.character,
       pinyin: w.pinyin,
       english: w.english,
